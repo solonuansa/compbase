@@ -153,11 +153,13 @@ export default async function Home({ searchParams }: HomePageProps) {
             </div>
           </section>
 
-          {competitionResult.errorMessage ? (
+        {competitionResult.errorMessage ? (
             <section className="soft-panel rounded-[1.25rem] border border-amber-200/14 bg-amber-200/8 px-4 py-3 text-sm text-amber-50 sm:px-5">
               <p>{competitionResult.errorMessage}</p>
             </section>
-          ) : null}
+          ) : (
+            null
+          )}
 
           <FilterBar
             key={`filter-${createCompetitionHref(competitionBaseFilters)}`}

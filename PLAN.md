@@ -35,8 +35,8 @@
 - [x] Menambahkan validasi input admin sebelum mutasi data dikirim.
 
 ## Phase 6: Deployment ke VPS Pribadi
-- Status: In Progress
-- Catatan: Jalur deploy diarahkan ke VPS pribadi dengan GitHub Actions, restart service via systemd, dan reverse proxy Nginx. Dokumentasi deployment detail sudah tersedia, proteksi token untuk endpoint write backend sudah ditambahkan, dan implementasi workflow mulai disiapkan di repo.
+- Status: Selesai
+- Catatan: Jalur deploy aktif ke VPS pribadi dengan GitHub Actions. Workflow sekarang mencakup lint, test backend, test frontend, build, deploy, health check backend, dan health check frontend (port 3100).
 
 ### Checklist Teknis Phase 6
 - [x] Menyusun panduan deployment step-by-step di `DEPLOYMENT.md`.
@@ -44,11 +44,13 @@
 - [x] Menambahkan workflow GitHub Actions untuk build dan deploy ke VPS.
 - [x] Menentukan branch deploy utama dan daftar GitHub Secrets yang wajib diisi.
 - [x] Menambahkan checklist verifikasi pascadeploy untuk frontend dan backend.
-- [x] Menambahkan proteksi token opsional untuk endpoint write backend (`POST/PUT/DELETE`).
+- [x] Menambahkan proteksi token untuk endpoint write backend (`POST/PUT/DELETE`) — token wajib diisi.
+- [x] Menambahkan quality gate lint + test di CI/CD sebelum build & deploy.
+- [x] Menambahkan frontend health check setelah deploy (port 3100).
 
 ## Phase 7: Persistensi Data dan Mutasi Admin
-- Status: In Progress
-- Catatan: Validasi Zod sudah ditambahkan, mutasi panel admin aktif ke backend, cache homepage sudah bisa diinvalidasi, audit log admin sudah tersimpan di Supabase, dan hardening auth/rate limiting dasar sudah diterapkan.
+- Status: Selesai
+- Catatan: Validasi Zod sudah ditambahkan, mutasi panel admin aktif ke backend, cache homepage sudah bisa diinvalidasi, audit log admin sudah tersimpan di Supabase, hardening auth/rate limiting dasar sudah diterapkan, dan CORS sudah direstrict.
 
 ### Checklist Teknis Phase 7
 - [x] Menambahkan dependency validasi yang disetujui untuk alur write.
@@ -61,15 +63,34 @@
 - [x] Memperkuat auth admin (hash password scrypt + signed session cookie).
 - [x] Menghapus fallback plaintext password admin (`ADMIN_PASSWORD`).
 - [x] Menambahkan script helper `pnpm admin:hash-password` untuk generate hash scrypt.
-- [ ] Menentukan penyimpanan data production yang persisten.
+- [x] Menentukan penyimpanan data production yang persisten (Supabase).
+- [x] Menghapus auth bypass fallback di backend (token wajib untuk write).
+- [x] Menghapus CORS wildcard (`*`) dan mengganti dengan allowed origins dari env.
 
 ## Phase 8: Operasional Production & Keamanan
-- Status: In Progress
-- Catatan: Dokumentasi deployment sudah diperbarui untuk env keamanan (`ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, `BACKEND_TRUST_PROXY`) dan migration policy audit log RLS.
+- Status: Selesai
+- Catatan: Dokumentasi deployment sudah diperbarui untuk env keamanan (`ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, `BACKEND_TRUST_PROXY`, `ALLOWED_ORIGINS`), migration policy audit log RLS, dan CI/CD quality gates.
 
 ### Checklist Teknis Phase 8
 - [x] Menambahkan migration `admin_audit_logs`.
 - [x] Menambahkan migration perbaikan policy RLS audit log.
 - [x] Memperbarui dokumentasi README + deployment untuk konfigurasi keamanan.
 - [x] Memperbarui dokumentasi untuk menghapus referensi `ADMIN_PASSWORD` plaintext.
+- [x] Menambahkan CI/CD quality gates (lint, test) sebelum deploy.
+- [x] Menambahkan frontend health check di workflow deploy.
+- [x] Menambahkan structured logging (JSON) di backend.
+- [x] Menambahkan loading boundary (`loading.tsx`) dan error boundary (`error.tsx`) di root dan admin.
+- [x] Menambahkan accessibility improvements (`aria-live`, tab roles).
 - [ ] Menambahkan observability sederhana (error-rate, rate-limit hit, auth failure) untuk operasi harian.
+
+## Phase 9: Skalabilitas & Data Integrity (Direncanakan)
+- Status: Direncanakan
+- Catatan: Fokus pada pagination, unique constraint, dan peningkatan performa database.
+
+### Checklist Teknis Phase 9
+- [ ] Pagination di endpoint `/competitions` dan `/submissions`.
+- [ ] Unique constraint `slug` di database + auto-suffix di backend.
+- [ ] Tambah kolom `competition_id` di `competition_submissions` untuk trace submission → kompetisi.
+- [ ] Fix kolom `reviewed_by` dari `uuid` ke `text` (karena aplikasi pakai custom auth, bukan Supabase Auth).
+- [ ] Tambah index `created_at` dan `submitter_email` di `competition_submissions`.
+- [ ] Migration formalisasi RLS `competitions` di repo.

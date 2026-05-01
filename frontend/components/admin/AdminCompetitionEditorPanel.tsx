@@ -130,7 +130,7 @@ export function AdminCompetitionEditorPanel({
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)]">
-            <div className="rounded-[1.15rem] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-zinc-300">
+            <div className="rounded-[1.15rem] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-zinc-300" aria-live="polite">
               {isMutationPending
                 ? "Sedang menyinkronkan perubahan ke backend..."
                 : saveMessage}
@@ -190,7 +190,7 @@ export function AdminCompetitionEditorPanel({
           </section>
 
           {selectedValidationErrors.length > 0 ? (
-            <section className="rounded-[1.25rem] border border-rose-300/16 bg-rose-300/10 p-4 text-sm text-rose-50">
+            <section className="rounded-[1.25rem] border border-rose-300/16 bg-rose-300/10 p-4 text-sm text-rose-50" aria-live="polite">
               <p className="font-medium">
                 Data ini masih perlu dirapikan sebelum disimpan:
               </p>

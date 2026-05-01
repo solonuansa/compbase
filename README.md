@@ -22,6 +22,10 @@ Di sisi publik, pengguna bisa menjelajahi daftar lomba, melihat prioritas kompet
 - Backend mendukung 2 sumber data:
   - Supabase (production-ready)
   - Local JSON fallback (untuk pengembangan cepat)
+- CI/CD pipeline melalui GitHub Actions dengan quality gate: lint, test, build, deploy ke VPS.
+- Frontend health check setelah deploy.
+- Loading dan error boundary di root dan admin.
+- Accessibility: `aria-live` di pesan feedback, tab roles di admin panel.
 
 ## Struktur Direktori
 
@@ -94,8 +98,9 @@ Variabel penting:
 - `SUPABASE_SUBMISSIONS_TABLE`: nama tabel pengajuan
 - `LOCAL_COMPETITIONS_FILE_PATH`: fallback file lokal kompetisi
 - `LOCAL_SUBMISSIONS_FILE_PATH`: fallback file lokal pengajuan
-- `BACKEND_ADMIN_TOKEN`: token proteksi endpoint write backend
+- `BACKEND_ADMIN_TOKEN`: token wajib untuk proteksi endpoint write backend (POST/PUT/DELETE)
 - `BACKEND_TRUST_PROXY`: aktifkan `true` hanya jika backend di balik reverse proxy tepercaya
+- `ALLOWED_ORIGINS`: domain yang diizinkan untuk CORS (contoh: `https://compbase.id`)
 - `ADMIN_EMAIL`: email login panel admin
 - `ADMIN_PASSWORD_HASH`: hash password admin (scrypt, **wajib** diisi)
 - `ADMIN_SESSION_SECRET`: secret signing session cookie admin (**wajib** diisi di production)
@@ -125,12 +130,16 @@ pnpm dev:backend
 - Admin: `http://localhost:3000/admin`
 - Panel admin: `http://localhost:3000/admin/panel`
 - Backend health check: `http://localhost:4000/health`
+- Frontend health check: `http://localhost:3000/` (cek status halaman root)
 
 ## Scripts
 
 - `pnpm dev` menjalankan semua service di workspace.
 - `pnpm build` build semua package.
 - `pnpm lint` lint frontend.
+- `pnpm test` test semua workspace.
+- `pnpm test:frontend` test frontend saja.
+- `pnpm test:backend` test backend saja.
 - `pnpm start:frontend` menjalankan frontend production mode.
 - `pnpm start:backend` menjalankan backend production mode.
 - `pnpm --filter backend migrate:supabase` migrasi data lokal ke Supabase.

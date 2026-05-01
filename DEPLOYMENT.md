@@ -77,7 +77,8 @@ LOCAL_COMPETITIONS_FILE_PATH=backend/.local/competitions.json
 LOCAL_SUBMISSIONS_FILE_PATH=backend/.local/submissions.json
 BACKEND_ADMIN_TOKEN=ganti-dengan-token-random-panjang
 BACKEND_TRUST_PROXY=true
-PORT=3000
+ALLOWED_ORIGINS=https://compbase.id
+PORT=3100
 NODE_ENV=production
 ADMIN_EMAIL=admin@compbase.id
 ADMIN_PASSWORD_HASH=isi-hash-scrypt-password-admin
@@ -90,6 +91,8 @@ Catatan:
 - jika keduanya kosong, backend otomatis fallback ke file lokal
 - `LOCAL_COMPETITIONS_FILE_PATH` dipakai sebagai sumber migrasi data lama
 - `BACKEND_TRUST_PROXY=true` hanya jika backend berada di balik reverse proxy tepercaya
+- `BACKEND_ADMIN_TOKEN` wajib diisi di production — endpoint write akan ditolak (401) kalau kosong atau tidak cocok
+- `ALLOWED_ORIGINS` berisi domain yang diizinkan untuk CORS (pisahkan dengan koma kalau lebih dari satu)
 - `ADMIN_PASSWORD_HASH` wajib diisi; gunakan `pnpm admin:hash-password` untuk generate
 - `ADMIN_SESSION_SECRET` wajib diisi di production untuk keamanan session cookie admin
 
@@ -222,7 +225,7 @@ server {
     server_name compbase.domainkamu.com;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3100;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -337,14 +340,18 @@ Alur workflow sekarang:
 
 1. checkout repo
 2. install dependency
-3. build backend
-4. build frontend
-5. buat bundle deploy di GitHub Actions
-6. upload bundle ke VPS
-7. extract bundle ke direktori sementara di VPS
-8. `rsync` hasilnya ke direktori aplikasi
-9. restart backend dan frontend
-10. health check backend lokal VPS
+3. lint frontend
+4. test backend
+5. test frontend
+6. build backend
+7. build frontend
+8. buat bundle deploy di GitHub Actions
+9. upload bundle ke VPS
+10. extract bundle ke direktori sementara di VPS
+11. `rsync` hasilnya ke direktori aplikasi
+12. restart backend dan frontend
+13. health check backend lokal VPS
+14. health check frontend lokal VPS (port 3100)
 
 Bundle deploy saat ini mencakup source repo yang dibutuhkan runtime, hasil build, dan `node_modules`, sambil tetap mengecualikan:
 
@@ -371,12 +378,15 @@ which systemctl
 
 - `pnpm --filter backend build` sukses
 - `pnpm --filter frontend build` sukses
+- `pnpm --filter backend test` sukses
+- `pnpm --filter frontend test` sukses
+- `pnpm --filter frontend lint` sukses
 - `pnpm dlx supabase@latest db push` sudah dijalankan
 - migration `20260429193000_fix_admin_audit_logs_rls_policies.sql` sudah ikut ter-push
-- `.env` di VPS terisi benar
+- `.env` di VPS terisi benar (termasuk `BACKEND_ADMIN_TOKEN`, `ADMIN_SESSION_SECRET`, `ALLOWED_ORIGINS`)
 - `rsync` tersedia di VPS
 - backend sehat di `/health`
-- frontend bisa dibuka
+- frontend sehat di `/` (port 3100)
 - jika ada data lama, migrasi data lokal sudah dijalankan
 
 ## 13. Troubleshooting Singkat

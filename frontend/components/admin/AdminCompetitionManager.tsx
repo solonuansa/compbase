@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   approveSubmissionAction,
   createCompetitionAction,
@@ -135,33 +135,39 @@ export function AdminCompetitionManager({
     inputElement.focus();
   };
 
-  const availableCategoryFilters = Array.from(
-    new Set(competitions.map((competition) => competition.category)),
-  ).sort((left, right) => left.localeCompare(right, "id-ID"));
+  const availableCategoryFilters = useMemo(
+    () =>
+      Array.from(new Set(competitions.map((c) => c.category))).sort((left, right) =>
+        left.localeCompare(right, "id-ID"),
+      ),
+    [competitions],
+  );
 
   const normalizedQuery = normalizeSearchValue(deferredSearchValue);
-  const filteredCompetitions = competitions.filter((competition) => {
-    if (
-      categoryFilterValue !== "all" &&
-      competition.category !== categoryFilterValue
-    ) {
-      return false;
-    }
+  const filteredCompetitions = useMemo(() => {
+    return competitions.filter((competition) => {
+      if (
+        categoryFilterValue !== "all" &&
+        competition.category !== categoryFilterValue
+      ) {
+        return false;
+      }
 
-    const competitionStatus = getCompetitionStatus(competition, now);
+      const competitionStatus = getCompetitionStatus(competition, now);
 
-    if (statusFilterValue !== "all" && competitionStatus !== statusFilterValue) {
-      return false;
-    }
+      if (statusFilterValue !== "all" && competitionStatus !== statusFilterValue) {
+        return false;
+      }
 
-    if (!normalizedQuery) {
-      return true;
-    }
+      if (!normalizedQuery) {
+        return true;
+      }
 
-    return [competition.name, competition.organizer, competition.category]
-      .map((value) => normalizeSearchValue(value))
-      .some((value) => value.includes(normalizedQuery));
-  });
+      return [competition.name, competition.organizer, competition.category]
+        .map((value) => normalizeSearchValue(value))
+        .some((value) => value.includes(normalizedQuery));
+    });
+  }, [competitions, categoryFilterValue, statusFilterValue, normalizedQuery, now]);
 
   const selectedCompetition =
     competitions.find((competition) => competition.id === selectedCompetitionId) ??
@@ -179,18 +185,21 @@ export function AdminCompetitionManager({
   const hasUnsavedChanges =
     serializeCompetitions(competitions) !== serializeCompetitions(savedCompetitions);
 
-  const priorityCompetitionsCount = competitions.filter(
-    (competition) => competition.isPriority,
-  ).length;
-
-  const priorityCompetitionIds = competitions
-    .filter((competition) => competition.isPriority)
-    .sort((left, right) => comparePriorityCompetition(left, right, now))
-    .map((competition) => competition.id);
-
-  const priorityOrderByCompetitionId = new Map<string, number>(
-    priorityCompetitionIds.map((competitionId, index) => [competitionId, index + 1]),
+  const priorityCompetitionsCount = useMemo(
+    () => competitions.filter((c) => c.isPriority).length,
+    [competitions],
   );
+
+  const priorityOrderByCompetitionId = useMemo(() => {
+    const priorityCompetitionIds = competitions
+      .filter((c) => c.isPriority)
+      .sort((left, right) => comparePriorityCompetition(left, right, now))
+      .map((c) => c.id);
+
+    return new Map<string, number>(
+      priorityCompetitionIds.map((competitionId, index) => [competitionId, index + 1]),
+    );
+  }, [competitions, now]);
 
   const selectedPriorityOrder = selectedCompetition
     ? priorityOrderByCompetitionId.get(selectedCompetition.id) ?? null
@@ -203,15 +212,20 @@ export function AdminCompetitionManager({
 
   const isSingleEventDate = selectedEventDateMode === "single";
 
-  const openCompetitions = competitions.filter(
-    (competition) => getCompetitionStatus(competition, now) === "open",
-  ).length;
-  const comingSoonCompetitions = competitions.filter(
-    (competition) => getCompetitionStatus(competition, now) === "coming-soon",
-  ).length;
-  const closedCompetitions = competitions.filter(
-    (competition) => getCompetitionStatus(competition, now) === "closed",
-  ).length;
+  const { openCompetitions, comingSoonCompetitions, closedCompetitions } = useMemo(() => {
+    let open = 0;
+    let comingSoon = 0;
+    let closed = 0;
+
+    for (const competition of competitions) {
+      const status = getCompetitionStatus(competition, now);
+      if (status === "open") open++;
+      else if (status === "coming-soon") comingSoon++;
+      else closed++;
+    }
+
+    return { openCompetitions: open, comingSoonCompetitions: comingSoon, closedCompetitions: closed };
+  }, [competitions, now]);
 
   const updateCompetition = (
     competitionId: string,
@@ -654,9 +668,13 @@ export function AdminCompetitionManager({
           </div>
         </header>
 
-        <section className="flex flex-wrap items-center gap-3">
+        <section role="tablist" aria-label="Panel admin" className="flex flex-wrap items-center gap-3">
           <button
             type="button"
+            role="tab"
+            id="tab-competitions"
+            aria-selected={activeTab === "competitions"}
+            aria-controls="panel-competitions"
             onClick={() => setActiveTab("competitions")}
             className={`inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-medium transition ${
               activeTab === "competitions"
@@ -668,6 +686,10 @@ export function AdminCompetitionManager({
           </button>
           <button
             type="button"
+            role="tab"
+            id="tab-submissions"
+            aria-selected={activeTab === "submissions"}
+            aria-controls="panel-submissions"
             onClick={() => setActiveTab("submissions")}
             className={`inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-medium transition ${
               activeTab === "submissions"
@@ -680,58 +702,62 @@ export function AdminCompetitionManager({
         </section>
 
         {activeTab === "competitions" ? (
-          <AdminCompetitionWorkspace
-            competitions={competitions}
-            filteredCompetitions={filteredCompetitions}
-            selectedCompetition={selectedCompetition}
-            selectedValidationErrors={selectedValidationErrors}
-            selectedPriorityOrder={selectedPriorityOrder}
-            isSingleEventDate={isSingleEventDate}
-            now={now}
-            isMutationPending={isMutationPending}
-            dataStatusMessage={dataStatusMessage}
-            openCompetitions={openCompetitions}
-            comingSoonCompetitions={comingSoonCompetitions}
-            closedCompetitions={closedCompetitions}
-            searchValue={searchValue}
-            categoryFilterValue={categoryFilterValue}
-            statusFilterValue={statusFilterValue}
-            availableCategoryFilters={availableCategoryFilters}
-            priorityOrderByCompetitionId={priorityOrderByCompetitionId}
-            syncedListMaxHeight={syncedListMaxHeight}
-            priorityCompetitionsCount={priorityCompetitionsCount}
-            hasUnsavedChanges={hasUnsavedChanges}
-            saveMessage={saveMessage}
-            regStartInputRef={regStartInputRef}
-            regEndInputRef={regEndInputRef}
-            eventStartInputRef={eventStartInputRef}
-            eventEndInputRef={eventEndInputRef}
-            editorPanelRef={editorPanelRef}
-            onSearchChange={setSearchValue}
-            onCategoryFilterChange={setCategoryFilterValue}
-            onStatusFilterChange={setStatusFilterValue}
-            onAddCompetition={handleAddCompetition}
-            onSelectCompetition={setSelectedCompetitionId}
-            onFieldChange={handleFieldChange}
-            onLinkChange={handleLinkChange}
-            onSave={handleSave}
-            onDuplicateCompetition={handleDuplicateCompetition}
-            onResetDraft={handleResetSelectedCompetition}
-            onDeleteCompetition={handleDeleteCompetition}
-            onTogglePriority={handleTogglePriority}
-            onEventDateModeChange={handleEventDateModeChange}
-            openDatePicker={openDatePicker}
-          />
+          <div role="tabpanel" id="panel-competitions" aria-labelledby="tab-competitions">
+            <AdminCompetitionWorkspace
+              competitions={competitions}
+              filteredCompetitions={filteredCompetitions}
+              selectedCompetition={selectedCompetition}
+              selectedValidationErrors={selectedValidationErrors}
+              selectedPriorityOrder={selectedPriorityOrder}
+              isSingleEventDate={isSingleEventDate}
+              now={now}
+              isMutationPending={isMutationPending}
+              dataStatusMessage={dataStatusMessage}
+              openCompetitions={openCompetitions}
+              comingSoonCompetitions={comingSoonCompetitions}
+              closedCompetitions={closedCompetitions}
+              searchValue={searchValue}
+              categoryFilterValue={categoryFilterValue}
+              statusFilterValue={statusFilterValue}
+              availableCategoryFilters={availableCategoryFilters}
+              priorityOrderByCompetitionId={priorityOrderByCompetitionId}
+              syncedListMaxHeight={syncedListMaxHeight}
+              priorityCompetitionsCount={priorityCompetitionsCount}
+              hasUnsavedChanges={hasUnsavedChanges}
+              saveMessage={saveMessage}
+              regStartInputRef={regStartInputRef}
+              regEndInputRef={regEndInputRef}
+              eventStartInputRef={eventStartInputRef}
+              eventEndInputRef={eventEndInputRef}
+              editorPanelRef={editorPanelRef}
+              onSearchChange={setSearchValue}
+              onCategoryFilterChange={setCategoryFilterValue}
+              onStatusFilterChange={setStatusFilterValue}
+              onAddCompetition={handleAddCompetition}
+              onSelectCompetition={setSelectedCompetitionId}
+              onFieldChange={handleFieldChange}
+              onLinkChange={handleLinkChange}
+              onSave={handleSave}
+              onDuplicateCompetition={handleDuplicateCompetition}
+              onResetDraft={handleResetSelectedCompetition}
+              onDeleteCompetition={handleDeleteCompetition}
+              onTogglePriority={handleTogglePriority}
+              onEventDateModeChange={handleEventDateModeChange}
+              openDatePicker={openDatePicker}
+            />
+          </div>
         ) : (
-          <AdminSubmissionReviewPanel
-            submissions={submissions}
-            submissionMessage={submissionMessage}
-            submissionStatusMessage={submissionStatusMessage}
-            isMutationPending={isMutationPending}
-            onApproveSubmission={handleApproveSubmission}
-            onRejectSubmission={handleRejectSubmission}
-            onDeleteSubmission={handleDeleteSubmission}
-          />
+          <div role="tabpanel" id="panel-submissions" aria-labelledby="tab-submissions">
+            <AdminSubmissionReviewPanel
+              submissions={submissions}
+              submissionMessage={submissionMessage}
+              submissionStatusMessage={submissionStatusMessage}
+              isMutationPending={isMutationPending}
+              onApproveSubmission={handleApproveSubmission}
+              onRejectSubmission={handleRejectSubmission}
+              onDeleteSubmission={handleDeleteSubmission}
+            />
+          </div>
         )}
       </div>
     </main>

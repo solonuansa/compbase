@@ -111,13 +111,9 @@ function getHeaderValue(
 
 function isAuthorizedForWrite(req: IncomingMessage): boolean {
   const configuredToken = getBackendAdminToken();
-
-  if (!configuredToken) {
-    return true;
-  }
-
   const providedToken = getHeaderValue(req.headers, ADMIN_TOKEN_HEADER);
-  return providedToken === configuredToken;
+
+  return Boolean(configuredToken) && providedToken === configuredToken;
 }
 
 function sendJson(
@@ -142,8 +138,24 @@ function sendJson(
   res.end(JSON.stringify(payload));
 }
 
-function setCorsHeaders(res: ServerResponse): void {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+function getAllowedOrigins(): string[] {
+  const originsEnv = process.env.ALLOWED_ORIGINS?.trim();
+
+  if (!originsEnv) {
+    return [];
+  }
+
+  return originsEnv.split(",").map((origin) => origin.trim());
+}
+
+function setCorsHeaders(res: ServerResponse, req: IncomingMessage): void {
+  const origin = req.headers.origin;
+  const allowedOrigins = getAllowedOrigins();
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
@@ -427,7 +439,7 @@ async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
-  setCorsHeaders(res);
+  setCorsHeaders(res, req);
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);

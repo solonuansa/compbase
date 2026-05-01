@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { publicSubmissionSchema } from "@/app/ajukan-kompetisi/schema";
 import { createCompetitionSubmissionInBackend } from "@/lib/utils/submissions";
 
@@ -66,12 +67,7 @@ export async function submitCompetitionProposalAction(
 
   try {
     await createCompetitionSubmissionInBackend(parsedResult.data);
-    return {
-      ok: true,
-      successMessage:
-        "Pengajuan berhasil dikirim. Tim admin akan meninjau data Anda sebelum dipublikasikan.",
-      errorMessage: null,
-    };
+    redirect("/ajukan-kompetisi?status=terkirim");
   } catch (error) {
     return {
       ok: false,

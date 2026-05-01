@@ -5,8 +5,10 @@ import { getSubmissionsFromBackend } from "@/lib/utils/submissions";
 
 export default async function AdminPanelPage() {
   await requireAdminSession();
-  const competitionResult = await getCompetitionsFromBackend();
-  const submissionResult = await getSubmissionsFromBackend();
+  const [competitionResult, submissionResult] = await Promise.all([
+    getCompetitionsFromBackend(),
+    getSubmissionsFromBackend(),
+  ]);
 
   return (
     <AdminCompetitionManager

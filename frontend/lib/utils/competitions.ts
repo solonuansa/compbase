@@ -28,6 +28,26 @@ const CATEGORY_SEARCH_ALIASES: Record<string, string[]> = {
 };
 const COMPETITION_TIMEZONE = "Asia/Jakarta";
 
+// Formatter di-hoist ke module level untuk menghindari pembuatan instance berulang kali.
+const todayFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: COMPETITION_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const dateDisplayFormatter = new Intl.DateTimeFormat("id-ID", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  timeZone: COMPETITION_TIMEZONE,
+});
+
+// Cache sederhana untuk menghindari perhitungan berulang dalam satu request.
+const todayDateCache = new Map<number, string>();
+const daysUntilDeadlineCache = new Map<string, number | null>();
+const competitionStatusCache = new Map<string, CompetitionStatus>();
+
 function pickFirstValue(value: SearchParamValue): string {
   if (typeof value === "string") {
     return value;
@@ -120,18 +140,21 @@ function parseDateToUtcTimestamp(dateInput: string): number {
 }
 
 function getTodayDateInCompetitionTimezone(now: Date): string {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: COMPETITION_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const dateParts = formatter.formatToParts(now);
+  const cacheKey = now.getTime();
+  const cached = todayDateCache.get(cacheKey);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const dateParts = todayFormatter.formatToParts(now);
   const year = dateParts.find((part) => part.type === "year")?.value ?? "";
   const month = dateParts.find((part) => part.type === "month")?.value ?? "";
   const day = dateParts.find((part) => part.type === "day")?.value ?? "";
+  const result = `${year}-${month}-${day}`;
 
-  return `${year}-${month}-${day}`;
+  todayDateCache.set(cacheKey, result);
+  return result;
 }
 
 export function parseCompetitionFilters(
@@ -166,42 +189,63 @@ export function getDaysUntilDeadline(regEnd: string, now: Date): number | null {
   }
 
   const todayDate = getTodayDateInCompetitionTimezone(now);
+  const cacheKey = `${regEnd}__${todayDate}`;
+  const cached = daysUntilDeadlineCache.get(cacheKey);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
   const deadlineTimestamp = parseDateToUtcTimestamp(regEnd);
   const todayTimestamp = parseDateToUtcTimestamp(todayDate);
 
   if (!Number.isFinite(deadlineTimestamp) || !Number.isFinite(todayTimestamp)) {
+    daysUntilDeadlineCache.set(cacheKey, null);
     return null;
   }
 
   const difference = deadlineTimestamp - todayTimestamp;
+  const result = Math.ceil(difference / (24 * 60 * 60 * 1000));
 
-  return Math.ceil(difference / (24 * 60 * 60 * 1000));
+  daysUntilDeadlineCache.set(cacheKey, result);
+  return result;
 }
 
 export function getCompetitionStatus(
   competition: Competition,
   now: Date,
 ): CompetitionStatus {
+  const todayDate = getTodayDateInCompetitionTimezone(now);
+  const cacheKey = `${competition.id}__${todayDate}`;
+  const cached = competitionStatusCache.get(cacheKey);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
   if (!hasDate(competition.regStart) || !hasDate(competition.regEnd)) {
+    competitionStatusCache.set(cacheKey, "coming-soon");
     return "coming-soon";
   }
 
-  const todayDate = getTodayDateInCompetitionTimezone(now);
-
   if (competition.regStart > todayDate) {
+    competitionStatusCache.set(cacheKey, "coming-soon");
     return "coming-soon";
   }
 
   const daysLeft = getDaysUntilDeadline(competition.regEnd, now);
 
   if (daysLeft === null) {
+    competitionStatusCache.set(cacheKey, "coming-soon");
     return "coming-soon";
   }
 
   if (daysLeft < 0) {
+    competitionStatusCache.set(cacheKey, "closed");
     return "closed";
   }
 
+  competitionStatusCache.set(cacheKey, "open");
   return "open";
 }
 
@@ -210,14 +254,7 @@ export function formatDate(dateInput: string): string {
     return "Belum ditentukan";
   }
 
-  const formatter = new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: COMPETITION_TIMEZONE,
-  });
-
-  return formatter.format(toDate(dateInput));
+  return dateDisplayFormatter.format(toDate(dateInput));
 }
 
 export function formatDateRange(startDate: string, endDate: string): string {
