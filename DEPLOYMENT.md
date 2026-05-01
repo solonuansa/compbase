@@ -46,6 +46,11 @@ supabase/migrations/20260427131000_make_competition_dates_nullable.sql
 supabase/migrations/20260427210000_create_competition_submissions.sql
 supabase/migrations/20260429181423_create_admin_audit_logs.sql
 supabase/migrations/20260429193000_fix_admin_audit_logs_rls_policies.sql
+supabase/migrations/20260501100000_add_competitions_rls_policies.sql
+supabase/migrations/20260501101000_add_competitions_slug_unique.sql
+supabase/migrations/20260501102000_add_competition_id_to_submissions.sql
+supabase/migrations/20260501103000_fix_submissions_reviewed_by_type.sql
+supabase/migrations/20260501104000_add_performance_indexes.sql
 ```
 
 ### 2.3 Push migration ke Supabase Cloud
@@ -382,12 +387,13 @@ which systemctl
 - `pnpm --filter frontend test` sukses
 - `pnpm --filter frontend lint` sukses
 - `pnpm dlx supabase@latest db push` sudah dijalankan
-- migration `20260429193000_fix_admin_audit_logs_rls_policies.sql` sudah ikut ter-push
+- semua 10 migration (termasuk 5 migration Tier 4 Mei 2026) sudah ikut ter-push dan terverifikasi via `supabase migration list`
 - `.env` di VPS terisi benar (termasuk `BACKEND_ADMIN_TOKEN`, `ADMIN_SESSION_SECRET`, `ALLOWED_ORIGINS`)
 - `rsync` tersedia di VPS
 - backend sehat di `/health`
 - frontend sehat di `/` (port 3100)
 - jika ada data lama, migrasi data lokal sudah dijalankan
+- log backend terstruktur (JSON) muncul di `journalctl` tanpa error
 
 ## 13. Troubleshooting Singkat
 

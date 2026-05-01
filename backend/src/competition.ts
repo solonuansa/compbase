@@ -77,6 +77,27 @@ export function createSlug(name: string): string {
   return normalizedName ? normalizedName : "kompetisi";
 }
 
+export function createUniqueSlug(
+  name: string,
+  existingSlugs: string[],
+): string {
+  const baseSlug = createSlug(name);
+
+  if (!existingSlugs.includes(baseSlug)) {
+    return baseSlug;
+  }
+
+  let counter = 2;
+  let candidate = `${baseSlug}-${counter}`;
+
+  while (existingSlugs.includes(candidate)) {
+    counter += 1;
+    candidate = `${baseSlug}-${counter}`;
+  }
+
+  return candidate;
+}
+
 export function getNextCompetitionId(competitions: Competition[]): string {
   const highestIndex = competitions.reduce<number>(
     (currentHighest, competition) => {

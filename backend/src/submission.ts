@@ -38,6 +38,7 @@ export interface CompetitionSubmission {
   paymentStatus: PaymentStatus;
   reviewedBy: string;
   reviewedAt: string;
+  competitionId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +77,7 @@ export function normalizeSubmissionInput(
     paymentStatus: "waived",
     reviewedBy: "",
     reviewedAt: "",
+    competitionId: null,
     createdAt: nowIso,
     updatedAt: nowIso,
   };
@@ -119,6 +121,7 @@ export function toCompetitionSubmission(
     ) as PaymentStatus,
     reviewedBy: String(row.reviewed_by ?? row.reviewedBy ?? "").trim(),
     reviewedAt: String(row.reviewed_at ?? row.reviewedAt ?? "").trim(),
+    competitionId: String(row.competition_id ?? row.competitionId ?? "").trim() || null,
     createdAt: String(
       row.created_at ?? row.createdAt ?? new Date().toISOString(),
     ).trim(),

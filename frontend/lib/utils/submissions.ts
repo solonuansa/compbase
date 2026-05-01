@@ -52,6 +52,13 @@ function getBackendAdminToken(): string | null {
   return configuredToken ? configuredToken : null;
 }
 
+function generateRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 function getMutationHeaders(includeJsonContentType: boolean): Record<string, string> {
   const headers: Record<string, string> = {};
 
@@ -64,6 +71,8 @@ function getMutationHeaders(includeJsonContentType: boolean): Record<string, str
   if (backendAdminToken) {
     headers[BACKEND_ADMIN_TOKEN_HEADER] = backendAdminToken;
   }
+
+  headers["x-request-id"] = generateRequestId();
 
   return headers;
 }

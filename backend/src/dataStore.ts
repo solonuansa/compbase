@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
   competitionSchema,
-  createSlug,
+  createUniqueSlug,
   getNextCompetitionId,
   normalizeCompetition,
   type Competition,
@@ -67,6 +67,7 @@ interface SupabaseSubmissionRow {
   payment_status: CompetitionSubmission["paymentStatus"];
   reviewed_by: string | null;
   reviewed_at: string | null;
+  competition_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -219,6 +220,7 @@ function toSupabaseSubmissionPayload(
     payment_status: submission.paymentStatus,
     reviewed_by: submission.reviewedBy || null,
     reviewed_at: submission.reviewedAt || null,
+    competition_id: submission.competitionId || null,
   };
 }
 
@@ -322,9 +324,13 @@ function createLocalCompetitionStore(): CompetitionStore {
 
       ensurePriorityLimit(competitions, competition);
 
-      const nextCompetitions = [competition, ...competitions];
+      const existingSlugs = competitions.map((c) => c.slug);
+      const uniqueSlug = createUniqueSlug(competition.name, existingSlugs);
+      const competitionWithUniqueSlug = { ...competition, slug: uniqueSlug };
+
+      const nextCompetitions = [competitionWithUniqueSlug, ...competitions];
       await writeLocalCompetitions(nextCompetitions);
-      return competition;
+      return competitionWithUniqueSlug;
     },
     async updateCompetition(
       competitionId: string,
@@ -393,10 +399,11 @@ function createLocalCompetitionStore(): CompetitionStore {
 
       const competitions = await readLocalCompetitions();
       const newCompetitionId = getNextCompetitionId(competitions);
+      const existingSlugs = competitions.map((c) => c.slug);
       const competition = submissionToCompetition(
         {
           ...submission,
-          slug: createSlug(submission.name),
+          slug: createUniqueSlug(submission.name, existingSlugs),
         },
         newCompetitionId,
       );
@@ -408,6 +415,7 @@ function createLocalCompetitionStore(): CompetitionStore {
       nextSubmissions[submissionIndex] = {
         ...submission,
         status: "approved",
+        competitionId: createdCompetition.id,
         reviewedAt: nowIso,
         updatedAt: nowIso,
       };
@@ -486,9 +494,13 @@ function createSupabaseCompetitionStore(supabase: SupabaseClient): CompetitionSt
       const competitions = await this.listCompetitions();
       ensurePriorityLimit(competitions, competition);
 
+      const existingSlugs = competitions.map((c) => c.slug);
+      const uniqueSlug = createUniqueSlug(competition.name, existingSlugs);
+      const competitionWithUniqueSlug = { ...competition, slug: uniqueSlug };
+
       const { data, error } = await supabase
         .from(competitionTableName)
-        .insert(toSupabaseCompetitionRow(competition))
+        .insert(toSupabaseCompetitionRow(competitionWithUniqueSlug))
         .select(
           "id,name,slug,organizer,category,regStart,regEnd,eventStart,eventEnd,isPriority,hasGuidebook,links",
         )
@@ -588,10 +600,11 @@ function createSupabaseCompetitionStore(supabase: SupabaseClient): CompetitionSt
 
       const competitions = await this.listCompetitions();
       const newCompetitionId = getNextCompetitionId(competitions);
+      const existingSlugs = competitions.map((c) => c.slug);
       const competition = submissionToCompetition(
         {
           ...submission,
-          slug: createSlug(submission.name),
+          slug: createUniqueSlug(submission.name, existingSlugs),
         },
         newCompetitionId,
       );
@@ -603,6 +616,7 @@ function createSupabaseCompetitionStore(supabase: SupabaseClient): CompetitionSt
         .from(submissionTableName)
         .update({
           status: "approved",
+          competition_id: createdCompetition.id,
           reviewed_at: nowIso,
           updated_at: nowIso,
         })

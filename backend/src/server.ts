@@ -11,6 +11,12 @@ import {
   type Competition,
 } from "./competition.ts";
 import { createCompetitionStore } from "./dataStore.ts";
+import {
+  getRequestId,
+  logError,
+  logRequestComplete,
+  logRequestStart,
+} from "./logger.ts";
 import { checkRateLimit, getRateLimitKey } from "./rateLimit.ts";
 import {
   competitionSubmissionSchema,
@@ -438,6 +444,7 @@ async function handleDeleteSubmission(
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
+  requestId: string,
 ): Promise<void> {
   setCorsHeaders(res, req);
 
@@ -595,30 +602,47 @@ async function handleRequest(
 }
 
 const server = createServer((req, res) => {
-  void handleRequest(req, res).catch((error: unknown) => {
-    if (error instanceof ZodError) {
-      sendJson(res, 422, {
+  const requestId = getRequestId(req);
+  const startTime = Date.now();
+  logRequestStart(req, requestId);
+
+  void handleRequest(req, res, requestId)
+    .then(() => {
+      logRequestComplete(req, res, requestId, startTime);
+    })
+    .catch((error: unknown) => {
+      logError(req, requestId, error);
+
+      const isProduction = process.env.NODE_ENV === "production";
+
+      if (error instanceof ZodError) {
+        sendJson(res, 422, {
+          ok: false,
+          error: "Validasi data gagal.",
+          details: getValidationMessages(error),
+        });
+        return;
+      }
+
+      const message = isProduction
+        ? "Terjadi kesalahan internal."
+        : error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan internal backend.";
+
+      sendJson(res, 500, {
         ok: false,
-        error: "Validasi data gagal.",
-        details: getValidationMessages(error),
+        error: message,
       });
-      return;
-    }
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Terjadi kesalahan internal backend.";
-
-    sendJson(res, 500, {
-      ok: false,
-      error: message,
     });
-  });
 });
 
 server.listen(port, () => {
   console.log(
-    `Backend berjalan di http://localhost:${port} dengan sumber data ${competitionStore.source}.`,
+    JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      message: `Backend berjalan di http://localhost:${port} dengan sumber data ${competitionStore.source}.`,
+    }),
   );
 });

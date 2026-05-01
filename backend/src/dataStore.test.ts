@@ -30,6 +30,7 @@ function createSubmission(
     paymentStatus: partialSubmission.paymentStatus ?? "waived",
     reviewedBy: partialSubmission.reviewedBy ?? "",
     reviewedAt: partialSubmission.reviewedAt ?? "",
+    competitionId: partialSubmission.competitionId ?? null,
     createdAt: partialSubmission.createdAt ?? timestamp,
     updatedAt: partialSubmission.updatedAt ?? timestamp,
   };
