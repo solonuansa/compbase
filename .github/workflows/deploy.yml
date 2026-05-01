@@ -29,6 +29,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint frontend
+        run: pnpm --filter frontend lint
+
+      - name: Test backend
+        run: pnpm --filter backend test
+
+      - name: Test frontend
+        run: pnpm --filter frontend test
+
       - name: Build backend
         run: pnpm --filter backend build
 
@@ -97,4 +106,6 @@ jobs:
             sudo systemctl is-active compbase-frontend
 
             curl -f "http://127.0.0.1:${BACKEND_PORT:-4100}/health"
+
+            curl -f "http://127.0.0.1:${PORT:-3100}/" > /dev/null
           EOF

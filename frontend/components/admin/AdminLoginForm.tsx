@@ -41,7 +41,7 @@ export function AdminLoginForm() {
       </label>
 
       {state.errorMessage ? (
-        <div className="rounded-[1rem] border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">
+        <div className="rounded-[1rem] border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100" aria-live="polite">
           {state.errorMessage}
         </div>
       ) : null}

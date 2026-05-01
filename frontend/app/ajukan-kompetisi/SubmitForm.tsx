@@ -245,13 +245,13 @@ export function SubmitForm(): ReactElement {
       </section>
 
       {state.errorMessage ? (
-        <div className="rounded-[1rem] border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">
+        <div className="rounded-[1rem] border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100" aria-live="polite">
           {state.errorMessage}
         </div>
       ) : null}
 
       {state.successMessage ? (
-        <div className="rounded-[1rem] border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">
+        <div className="rounded-[1rem] border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100" aria-live="polite">
           {state.successMessage}
         </div>
       ) : null}
