@@ -57,7 +57,7 @@ export function SpotlightSection({
           <div className="grid gap-3 px-5 py-3 md:px-[1.3rem] md:py-3 lg:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
             <div className="grid gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={primaryStatus} compact />
+                <StatusBadge status={primaryStatus} size="sm" />
               </div>
 
               <div className="space-y-3">
@@ -142,7 +142,7 @@ export function SpotlightSection({
                   className="motion-surface block w-full rounded-[1.1rem] border border-white/6 bg-white/[0.022] px-4 py-2.5 text-left hover:border-violet-200/16"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={status} compact />
+                    <StatusBadge status={status} size="sm" />
                   </div>
 
                   <h3 className="mt-2 text-[1.28rem] font-semibold leading-tight text-zinc-50">

@@ -94,7 +94,7 @@ export function AdminCompetitionWorkspace({
   openDatePicker,
 }: AdminCompetitionWorkspaceProps) {
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <section className="grid gap-4 md:grid-cols-4">
         <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-5 py-4 text-center backdrop-blur-md">
           <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
@@ -183,6 +183,6 @@ export function AdminCompetitionWorkspace({
           openDatePicker={openDatePicker}
         />
       </section>
-    </>
+    </div>
   );
 }
