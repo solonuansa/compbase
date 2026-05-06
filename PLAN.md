@@ -69,7 +69,7 @@
 
 ## Phase 8: Operasional Production & Keamanan
 - Status: Selesai
-- Catatan: Dokumentasi deployment sudah diperbarui untuk env keamanan (`ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, `BACKEND_TRUST_PROXY`, `ALLOWED_ORIGINS`), migration policy audit log RLS, dan CI/CD quality gates.
+- Catatan: Dokumentasi deployment sudah diperbarui untuk env keamanan (`ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, `BACKEND_TRUST_PROXY`, `ALLOWED_ORIGINS`), migration policy audit log RLS, CI/CD quality gates, structured logging, dan error handling production-safe.
 
 ### Checklist Teknis Phase 8
 - [x] Menambahkan migration `admin_audit_logs`.
@@ -78,19 +78,21 @@
 - [x] Memperbarui dokumentasi untuk menghapus referensi `ADMIN_PASSWORD` plaintext.
 - [x] Menambahkan CI/CD quality gates (lint, test) sebelum deploy.
 - [x] Menambahkan frontend health check di workflow deploy.
-- [x] Menambahkan structured logging (JSON) di backend.
+- [x] Menambahkan structured logging (JSON) di backend dengan request ID tracing.
 - [x] Menambahkan loading boundary (`loading.tsx`) dan error boundary (`error.tsx`) di root dan admin.
 - [x] Menambahkan accessibility improvements (`aria-live`, tab roles).
+- [x] Error 500 di production tidak lagi leak detail stack trace ke client.
 - [ ] Menambahkan observability sederhana (error-rate, rate-limit hit, auth failure) untuk operasi harian.
 
-## Phase 9: Skalabilitas & Data Integrity (Direncanakan)
-- Status: Direncanakan
-- Catatan: Fokus pada pagination, unique constraint, dan peningkatan performa database.
+## Phase 9: Skalabilitas & Data Integrity (Sebagian Selesai)
+- Status: In Progress
+- Catatan: Migration database, unique slug, competition_id, dan index sudah diterapkan. Pagination dan populasi `reviewed_by` masih tersisa.
 
 ### Checklist Teknis Phase 9
 - [ ] Pagination di endpoint `/competitions` dan `/submissions`.
-- [ ] Unique constraint `slug` di database + auto-suffix di backend.
-- [ ] Tambah kolom `competition_id` di `competition_submissions` untuk trace submission → kompetisi.
-- [ ] Fix kolom `reviewed_by` dari `uuid` ke `text` (karena aplikasi pakai custom auth, bukan Supabase Auth).
-- [ ] Tambah index `created_at` dan `submitter_email` di `competition_submissions`.
-- [ ] Migration formalisasi RLS `competitions` di repo.
+- [x] Unique constraint `slug` di database + auto-suffix di backend.
+- [x] Tambah kolom `competition_id` di `competition_submissions` untuk trace submission → kompetisi.
+- [x] Fix kolom `reviewed_by` dari `uuid` ke `text` (karena aplikasi pakai custom auth, bukan Supabase Auth).
+- [x] Tambah index `created_at`, `submitter_email`, dan `competition_id` di `competition_submissions`.
+- [x] Migration formalisasi RLS `competitions` di repo.
+- [ ] Populasi `reviewed_by` dengan email admin saat approve/reject submission (deferred — butuh perubahan alur frontend-backend).

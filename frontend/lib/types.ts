@@ -71,6 +71,7 @@ export interface CompetitionSubmission {
   paymentStatus: SubmissionPaymentStatus;
   reviewedBy: string;
   reviewedAt: string;
+  competitionId: string | null;
   createdAt: string;
   updatedAt: string;
 }

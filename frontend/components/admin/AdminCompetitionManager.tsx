@@ -621,7 +621,7 @@ export function AdminCompetitionManager({
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+    <main className="relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-[-10rem] top-[10%] h-[24rem] w-[24rem] rounded-full bg-amber-300/10 blur-[120px]" />
         <div className="absolute right-[-12rem] top-[-6rem] h-[28rem] w-[28rem] rounded-full bg-emerald-300/10 blur-[140px]" />
@@ -630,16 +630,16 @@ export function AdminCompetitionManager({
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="rounded-[1.7rem] border border-white/10 bg-[oklch(0.16_0.02_250_/_0.9)] p-5 shadow-[0_30px_90px_-55px_oklch(0.05_0.03_250)] backdrop-blur-2xl sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-3xl space-y-3">
               <span className="inline-flex rounded-full border border-white/10 bg-white/[0.045] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-zinc-200">
                 Panel admin
               </span>
               <div>
-                <h1 className="font-brand text-[clamp(1.9rem,4.2vw,3.3rem)] leading-[1] text-zinc-50">
+                <h1 className="font-brand text-[clamp(1.9rem,4.2vw,3.3rem)] leading-[1.05] text-zinc-50">
                   Kelola kompetisi dengan meja kerja yang lebih rapi.
                 </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
+                <p className="mt-5 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
                   Panel ini sekarang sudah diproteksi login admin dan dirapikan
                   untuk mengelola detail lomba, jadwal, deskripsi, prioritas, dan
                   tautan penting dengan lebih aman.
@@ -647,7 +647,7 @@ export function AdminCompetitionManager({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-3 sm:pt-1">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               <Link
                 href="/"
                 aria-label="Kembali ke beranda"

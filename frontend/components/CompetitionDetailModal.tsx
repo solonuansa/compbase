@@ -80,18 +80,18 @@ export function CompetitionDetailModal({
         className="absolute inset-0 bg-[oklch(0.13_0.02_286_/_0.78)] backdrop-blur-md"
       />
 
-      <div className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[1.6rem] border border-white/7 bg-surface-2/90 shadow-[0_36px_110px_-56px_oklch(0.02_0.03_286)] backdrop-blur-2xl">
-        <div className="flex items-start justify-between gap-4 px-5 py-5 md:px-6 md:py-6">
-          <div className="space-y-2.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={status} />
+        <div className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[1.6rem] border border-white/7 bg-surface-2/90 shadow-[0_36px_110px_-56px_oklch(0.02_0.03_286)] backdrop-blur-2xl">
+        <div className="flex items-start justify-between gap-4 px-6 py-6 md:px-8 md:py-7">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <StatusBadge status={status} size="md" />
             </div>
 
             <div>
-              <p className="text-[13px] text-zinc-400">
+              <p className="text-base text-zinc-400">
                 {competition.category} | {competition.organizer}
               </p>
-              <h3 className="mt-1.5 font-brand text-[clamp(1.55rem,3.4vw,2.35rem)] leading-[1.04] text-zinc-50">
+              <h3 className="mt-1.5 font-brand text-[clamp(1.85rem,3.8vw,2.75rem)] leading-[1.08] text-zinc-50">
                 {competition.name}
               </h3>
             </div>
@@ -100,21 +100,21 @@ export function CompetitionDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:border-white/18 hover:text-zinc-50"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:border-white/18 hover:text-zinc-50"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               <path d="M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         </div>
 
-        <div className="grid gap-4 px-5 pb-5 pt-0 md:px-6 md:pb-6">
-          <dl className="grid gap-2.5 sm:grid-cols-2">
-            <div className="rounded-[1rem] bg-black/12 p-3.5 text-[13px] text-zinc-300 ring-1 ring-white/6">
-              <dt className="text-xs uppercase tracking-[0.22em] text-zinc-500">Deadline pendaftaran</dt>
-              <dd className="mt-1.5 text-sm font-medium text-zinc-100">{formatDate(competition.regEnd)}</dd>
-              <dd className="mt-1 text-xs text-zinc-400">
+        <div className="grid gap-6 px-6 pb-7 pt-0 md:px-8 md:pb-9">
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[1rem] bg-black/12 p-5 text-[0.95rem] text-zinc-300 ring-1 ring-white/6">
+              <dt className="text-sm uppercase tracking-[0.22em] text-zinc-500">Deadline pendaftaran</dt>
+              <dd className="mt-2.5 text-[1.06rem] font-medium text-zinc-100">{formatDate(competition.regEnd)}</dd>
+              <dd className="mt-2 text-sm text-zinc-400">
                 {daysLeft === null
                   ? "Tanggal belum ditentukan"
                   : daysLeft === 0
@@ -124,15 +124,15 @@ export function CompetitionDetailModal({
                     : "Pendaftaran sudah tutup"}
               </dd>
             </div>
-            <div className="rounded-[1rem] bg-black/12 p-3.5 text-[13px] text-zinc-300 ring-1 ring-white/6">
-              <dt className="text-xs uppercase tracking-[0.22em] text-zinc-500">Penyisihan</dt>
-              <dd className="mt-1.5 font-medium leading-relaxed text-zinc-100">
+            <div className="rounded-[1rem] bg-black/12 p-5 text-[0.95rem] text-zinc-300 ring-1 ring-white/6">
+              <dt className="text-sm uppercase tracking-[0.22em] text-zinc-500">Penyisihan</dt>
+              <dd className="mt-2.5 text-[1.06rem] font-medium leading-relaxed text-zinc-100">
                 {formatDateRange(competition.eventStart, competition.eventEnd)}
               </dd>
             </div>
           </dl>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             <ShareButton shareText={shareText} />
 
             {actionLinks.map((item) => (
@@ -141,7 +141,7 @@ export function CompetitionDetailModal({
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/9 bg-white/[0.03] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 hover:border-violet-200/20 hover:text-violet-100"
+                className="rounded-full border border-white/9 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-zinc-200 hover:border-violet-200/20 hover:text-violet-100"
               >
                 {item.label}
               </a>

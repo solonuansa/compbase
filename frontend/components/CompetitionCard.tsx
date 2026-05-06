@@ -46,7 +46,7 @@ export function CompetitionCard({ competition, now, index, onOpenDetail }: Compe
     >
       <div className="grid gap-4 p-3.5 md:p-[1.125rem]">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <StatusBadge status={status} compact />
+          <StatusBadge status={status} size="sm" />
           <span className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-zinc-400">
             #{competitionOrder}
           </span>

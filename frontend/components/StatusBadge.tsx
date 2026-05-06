@@ -2,14 +2,17 @@ import type { CompetitionStatus } from "@/lib/types";
 
 interface StatusBadgeProps {
   status: CompetitionStatus;
-  compact?: boolean;
+  size?: "sm" | "md" | "lg";
 }
 
-export function StatusBadge({ status, compact = false }: StatusBadgeProps) {
-  const sizeClassName = compact
-    ? "min-h-8 gap-1.5 px-3 py-0.5 text-[0.72rem] tracking-[0.11em]"
-    : "min-h-9 gap-2 px-3.5 py-1 text-sm tracking-wide";
-  const dotClassName = compact ? "h-1.5 w-1.5" : "h-2 w-2";
+export function StatusBadge({ status, size = "lg" }: StatusBadgeProps) {
+  const sizeClassName =
+    size === "sm"
+      ? "min-h-8 gap-1.5 px-3 py-0.5 text-[0.72rem] tracking-[0.11em]"
+      : size === "md"
+        ? "min-h-8 gap-1.5 px-3 py-0.5 text-xs tracking-wide"
+        : "min-h-9 gap-2 px-3.5 py-1 text-sm tracking-wide";
+  const dotClassName = size === "lg" ? "h-2 w-2" : "h-1.5 w-1.5";
 
   if (status === "coming-soon") {
     return (

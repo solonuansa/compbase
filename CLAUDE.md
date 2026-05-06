@@ -17,9 +17,23 @@
 - Tab switcher admin panel sekarang accessible dengan `role="tab"`, `aria-selected`, dan `role="tabpanel"`.
 - Loading skeleton dan error boundary dibuat untuk root (`app/`) dan admin (`app/admin/`).
 
-### Database Plan (Tier 4 — Direncanakan)
-- RLS formalisasi untuk `competitions`.
-- Unique constraint `slug`.
-- Kolom `competition_id` di `competition_submissions`.
-- Index tambahan di `competition_submissions`.
-- Fix kolom `reviewed_by` dari `uuid` ke `text`.
+### Backend Robustness (Tier 2 — Selesai)
+- Structured JSON logging (`backend/src/logger.ts`) dengan `request_id` per request.
+- Request ID tracing: frontend otomatis kirim `X-Request-ID`, backend generate UUID fallback.
+- Error 500 di production tidak leak stack trace — client hanya menerima `"Terjadi kesalahan internal."`.
+- Server startup log sekarang juga format JSON.
+
+### Database Integrity (Tier 4 — Selesai)
+- 5 migration SQL baru:
+  1. RLS formalisasi `competitions` (select public, all service_role)
+  2. Unique constraint `slug` di `competitions`
+  3. Kolom `competition_id` di `competition_submissions` (tanpa FK, nullable)
+  4. Fix `reviewed_by` dari `uuid` → `text`
+  5. Index performa (`created_at`, `submitter_email`, `competition_id`, `slug`)
+- `createUniqueSlug(name, existingSlugs)` — auto-suffix `-2`, `-3` kalau slug duplikat.
+- `approveSubmission` sekarang mengisi `competition_id` dengan ID kompetisi baru.
+
+### Deferred / Direncanakan
+- **Populasi `reviewed_by` dengan email admin** — butuh frontend kirim `X-Admin-Email` header + backend pass ke store. Ditunda karena perubahan interface lebih besar.
+- **Pagination** `/competitions` dan `/submissions` — belum diterapkan.
+- **Observability** (error-rate, rate-limit hit metrics) — belum diterapkan.
