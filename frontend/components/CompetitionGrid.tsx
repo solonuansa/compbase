@@ -38,12 +38,11 @@ export function CompetitionGrid({
       </div>
 
       <ul className="grid gap-4 md:gap-5 lg:grid-cols-2">
-        {competitions.map((competition, index) => (
+        {competitions.map((competition) => (
           <li key={competition.id}>
             <CompetitionCard
               competition={competition}
               now={now}
-              index={index}
               onOpenDetail={onOpenDetail}
             />
           </li>

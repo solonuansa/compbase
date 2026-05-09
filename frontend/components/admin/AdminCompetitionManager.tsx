@@ -78,7 +78,7 @@ export function AdminCompetitionManager({
   const [syncedListMaxHeight, setSyncedListMaxHeight] = useState<number | null>(
     null,
   );
-  const now = new Date();
+  const [now] = useState(() => new Date());
 
   useEffect(() => {
     const editorPanelElement = editorPanelRef.current;

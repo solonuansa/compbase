@@ -1,7 +1,10 @@
 ﻿import { unstable_cache } from "next/cache";
 import { CompetitionCatalog } from "@/components/CompetitionCatalog";
+import { FavoritesProvider } from "@/components/FavoritesContext";
 import { FilterBar } from "@/components/FilterBar";
 import { HeroSection } from "@/components/HeroSection";
+import { ScrollAwareLink } from "@/components/ScrollAwareLink";
+import { ScrollRestoration } from "@/components/ScrollRestoration";
 import Link from "next/link";
 import type { CompetitionTab } from "@/lib/types";
 import { getCompetitionsFromBackend } from "@/lib/utils/backend";
@@ -67,12 +70,12 @@ export default async function Home({ searchParams }: HomePageProps) {
     sort: filters.sort,
     tab: filters.tab,
   };
-  const competitions = sortCompetitions(
+  const filteredCompetitions = sortCompetitions(
     filterCompetitions(allCompetitions, filters, now),
     filters.sort,
     now,
   );
-  const totalFilteredCompetitions = competitions.length;
+  const totalFilteredCompetitions = filteredCompetitions.length;
   const totalPages = Math.max(
     1,
     Math.ceil(totalFilteredCompetitions / COMPETITIONS_PER_PAGE),
@@ -83,7 +86,7 @@ export default async function Home({ searchParams }: HomePageProps) {
     COMPETITIONS_PER_PAGE,
   );
   const startIndex = (currentPage - 1) * COMPETITIONS_PER_PAGE;
-  const paginatedCompetitions = competitions.slice(
+  const paginatedCompetitions = filteredCompetitions.slice(
     startIndex,
     startIndex + COMPETITIONS_PER_PAGE,
   );
@@ -127,51 +130,53 @@ export default async function Home({ searchParams }: HomePageProps) {
           stats={getCompetitionStats(allCompetitions, now)}
         />
 
-        <CompetitionCatalog
-          competitions={paginatedCompetitions}
-          spotlightCompetitions={spotlightCompetitions}
-          totalCompetitions={totalFilteredCompetitions}
-          now={now}
-        >
-          <section className="soft-panel rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-4 py-4 sm:px-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-base font-semibold text-zinc-100 sm:text-[1.05rem]">
-                  Punya kompetisi yang belum ada di CompBase?
-                </p>
-                <p className="mt-1 text-base text-zinc-400">
-                  Ajukan kompetisimu untuk direview admin sebelum masuk katalog publik.
-                </p>
+        <FavoritesProvider key={createCompetitionHref(competitionBaseFilters)}>
+          <ScrollRestoration />
+          <CompetitionCatalog
+            competitions={paginatedCompetitions}
+            allCompetitions={filteredCompetitions}
+            spotlightCompetitions={spotlightCompetitions}
+            totalCompetitions={totalFilteredCompetitions}
+            now={now}
+          >
+            <section className="soft-panel rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-4 py-4 sm:px-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-base font-semibold text-zinc-100 sm:text-[1.05rem]">
+                    Punya kompetisi yang belum ada di CompBase?
+                  </p>
+                  <p className="mt-1 text-base text-zinc-400">
+                    Ajukan kompetisimu untuk direview admin sebelum masuk katalog publik.
+                  </p>
+                </div>
+
+                <Link
+                  href="/ajukan-kompetisi"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-amber-200/20 bg-amber-200/12 px-5 text-base font-semibold text-amber-100 transition hover:border-amber-200/30 hover:bg-amber-200/20"
+                >
+                  Mau Tambah Kompetisimu?
+                </Link>
               </div>
-
-              <Link
-                href="/ajukan-kompetisi"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-amber-200/20 bg-amber-200/12 px-5 text-base font-semibold text-amber-100 transition hover:border-amber-200/30 hover:bg-amber-200/20"
-              >
-                Mau Tambah Kompetisimu?
-              </Link>
-            </div>
-          </section>
-
-        {competitionResult.errorMessage ? (
-            <section className="soft-panel rounded-[1.25rem] border border-amber-200/14 bg-amber-200/8 px-4 py-3 text-sm text-amber-50 sm:px-5">
-              <p>{competitionResult.errorMessage}</p>
             </section>
-          ) : (
-            null
-          )}
 
-          <FilterBar
-            key={`filter-${createCompetitionHref(competitionBaseFilters)}`}
-            query={filters.query}
-            category={filters.category}
-            sort={filters.sort}
-            activeTab={filters.tab}
-            categories={getCategoryOptions(allCompetitions)}
-            tabLinks={tabLinks}
-            clearHref={createCompetitionHref({})}
-          />
-        </CompetitionCatalog>
+            {competitionResult.errorMessage ? (
+              <section className="soft-panel rounded-[1.25rem] border border-amber-200/14 bg-amber-200/8 px-4 py-3 text-sm text-amber-50 sm:px-5">
+                <p>{competitionResult.errorMessage}</p>
+              </section>
+            ) : null}
+
+            <FilterBar
+              key={`filter-${createCompetitionHref(competitionBaseFilters)}`}
+              query={filters.query}
+              category={filters.category}
+              sort={filters.sort}
+              activeTab={filters.tab}
+              categories={getCategoryOptions(allCompetitions)}
+              tabLinks={tabLinks}
+              clearHref={createCompetitionHref({})}
+            />
+          </CompetitionCatalog>
+        </FavoritesProvider>
 
         {totalPages > 1 ? (
           <nav
@@ -184,13 +189,13 @@ export default async function Home({ searchParams }: HomePageProps) {
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {previousPageHref ? (
-                  <Link
+                  <ScrollAwareLink
                     href={previousPageHref}
                     scroll={false}
                     className="inline-flex h-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] px-4 text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.07]"
                   >
                     Prev
-                  </Link>
+                  </ScrollAwareLink>
                 ) : (
                   <span className="inline-flex h-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.02] px-4 text-sm font-medium text-zinc-500">
                     Prev
@@ -205,7 +210,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                   const isActive = currentPage === pageNumber;
 
                   return (
-                    <Link
+                    <ScrollAwareLink
                       key={pageNumber}
                       href={href}
                       scroll={false}
@@ -217,18 +222,18 @@ export default async function Home({ searchParams }: HomePageProps) {
                       }`}
                     >
                       {pageNumber}
-                    </Link>
+                    </ScrollAwareLink>
                   );
                 })}
 
                 {nextPageHref ? (
-                  <Link
+                  <ScrollAwareLink
                     href={nextPageHref}
                     scroll={false}
                     className="inline-flex h-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] px-4 text-sm font-medium text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.07]"
                   >
                     Next
-                  </Link>
+                  </ScrollAwareLink>
                 ) : (
                   <span className="inline-flex h-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.02] px-4 text-sm font-medium text-zinc-500">
                     Next

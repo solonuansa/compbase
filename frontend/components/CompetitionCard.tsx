@@ -1,5 +1,6 @@
 "use client";
 
+import { BookmarkButton } from "@/components/BookmarkButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { Competition } from "@/lib/types";
 import {
@@ -12,7 +13,6 @@ import {
 interface CompetitionCardProps {
   competition: Competition;
   now: Date;
-  index: number;
   onOpenDetail: (competition: Competition) => void;
 }
 
@@ -32,24 +32,30 @@ function getRemainingDaysLabel(daysLeft: number | null): string {
   return "Sudah lewat";
 }
 
-export function CompetitionCard({ competition, now, index, onOpenDetail }: CompetitionCardProps) {
+export function CompetitionCard({ competition, now, onOpenDetail }: CompetitionCardProps) {
   const status = getCompetitionStatus(competition, now);
   const daysLeft = getDaysUntilDeadline(competition.regEnd, now);
-  const competitionOrder = String(index + 1).padStart(2, "0");
   const daysLeftLabel = getRemainingDaysLabel(daysLeft);
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpenDetail(competition);
+    }
+  };
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onOpenDetail(competition)}
-      className="motion-surface group soft-panel block w-full overflow-hidden rounded-[1.2rem] border border-line-soft/80 bg-surface-1/24 text-left transition-colors hover:border-zinc-500/70"
+      onKeyDown={handleKeyDown}
+      className="motion-surface group soft-panel block w-full cursor-pointer overflow-hidden rounded-[1.2rem] border border-line-soft/80 bg-surface-1/24 text-left transition-colors hover:border-zinc-500/70"
     >
       <div className="grid gap-4 p-3.5 md:p-[1.125rem]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <StatusBadge status={status} size="sm" />
-          <span className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-zinc-400">
-            #{competitionOrder}
-          </span>
+          <BookmarkButton competitionId={competition.id} size="sm" />
         </div>
 
         <div className="space-y-1.5">
@@ -99,6 +105,6 @@ export function CompetitionCard({ competition, now, index, onOpenDetail }: Compe
           </span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

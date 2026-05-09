@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { useFavorites } from "@/components/FavoritesContext";
 import type { CompetitionSort, CompetitionTab } from "@/lib/types";
 import { createCompetitionHref } from "@/lib/utils/competitions";
+import { saveScrollPosition } from "@/lib/utils/scrollRestore";
 
 interface FilterTabItem {
   label: string;
@@ -13,7 +15,7 @@ interface FilterTabItem {
   isActive: boolean;
 }
 
-interface FilterBarProps {
+export interface FilterBarProps {
   query: string;
   category: string;
   sort: CompetitionSort;
@@ -54,6 +56,7 @@ export function FilterBar({
   tabLinks,
   clearHref,
 }: FilterBarProps) {
+  const { showFavoritesOnly, toggleFavorites } = useFavorites();
   const router = useRouter();
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [queryValue, setQueryValue] = useState<string>(query);
@@ -77,6 +80,7 @@ export function FilterBar({
       tab: toCompetitionTab(formData.get("tab")),
     });
 
+    saveScrollPosition();
     startTransition(() => {
       router.push(nextHref, { scroll: false });
     });
@@ -125,8 +129,9 @@ export function FilterBar({
               key={tab.label}
               href={tab.href}
               scroll={false}
+              onClick={() => saveScrollPosition()}
               className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-base font-medium transition duration-200 hover:-translate-y-0.5 ${
-                tab.isActive
+                tab.isActive && !showFavoritesOnly
                   ? "border-violet-300/26 bg-violet-300/14 text-violet-100 shadow-[0_10px_28px_-20px_oklch(0.74_0.08_302)]"
                   : "border-white/7 bg-white/[0.025] text-zinc-300 hover:border-violet-200/28 hover:bg-violet-200/8 hover:text-zinc-100"
               }`}
@@ -134,6 +139,32 @@ export function FilterBar({
               {tab.label}
             </Link>
           ))}
+
+          <button
+            type="button"
+            onClick={toggleFavorites}
+            aria-pressed={showFavoritesOnly}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-base font-medium transition duration-200 hover:-translate-y-0.5 ${
+              showFavoritesOnly
+                ? "border-amber-300/26 bg-amber-300/14 text-amber-100 shadow-[0_10px_28px_-20px_oklch(0.74_0.08_80)]"
+                : "border-white/7 bg-white/[0.025] text-zinc-300 hover:border-amber-200/28 hover:bg-amber-200/8 hover:text-zinc-100"
+            }`}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill={showFavoritesOnly ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3.5L5 21V5Z" />
+            </svg>
+            Favorit
+          </button>
         </div>
 
         <div className="min-h-5 text-sm text-zinc-400">
@@ -219,6 +250,7 @@ export function FilterBar({
           <button
             type="button"
             onClick={() => {
+              saveScrollPosition();
               startTransition(() => {
                 router.push(clearHref, { scroll: false });
               });
