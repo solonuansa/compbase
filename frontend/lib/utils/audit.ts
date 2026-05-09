@@ -25,7 +25,7 @@ function createServerClient() {
 
 export async function logAdminAudit(
   adminEmail: string,
-  action: "create" | "update" | "delete" | "approve" | "reject",
+  action: "create" | "update" | "delete" | "approve" | "reject" | "bulk-delete" | "bulk-set-priority" | "bulk-remove-priority",
   entityType: "competition" | "submission",
   entityId: string,
   payloadBefore: unknown = null,

@@ -24,6 +24,11 @@ export interface CompetitionStore {
     competition: Competition,
   ): Promise<Competition>;
   deleteCompetition(competitionId: string): Promise<string>;
+  bulkDeleteCompetitions(competitionIds: string[]): Promise<string[]>;
+  bulkUpdateCompetitions(
+    competitionIds: string[],
+    updates: Partial<Pick<Competition, "isPriority">>,
+  ): Promise<Competition[]>;
   listSubmissions(): Promise<CompetitionSubmission[]>;
   createSubmission(submission: CompetitionSubmission): Promise<CompetitionSubmission>;
   approveSubmission(submissionId: string): Promise<Competition>;
@@ -365,6 +370,59 @@ function createLocalCompetitionStore(): CompetitionStore {
       await writeLocalCompetitions(nextCompetitions);
       return competitionId;
     },
+    async bulkDeleteCompetitions(competitionIds: string[]): Promise<string[]> {
+      const competitions = await readLocalCompetitions();
+      const deletedIds: string[] = [];
+      const nextCompetitions = competitions.filter((competition) => {
+        if (competitionIds.includes(competition.id)) {
+          deletedIds.push(competition.id);
+          return false;
+        }
+        return true;
+      });
+
+      if (deletedIds.length === 0) {
+        throw new Error("Tidak ada kompetisi yang ditemukan untuk dihapus.");
+      }
+
+      await writeLocalCompetitions(nextCompetitions);
+      return deletedIds;
+    },
+    async bulkUpdateCompetitions(
+      competitionIds: string[],
+      updates: Partial<Pick<Competition, "isPriority">>,
+    ): Promise<Competition[]> {
+      const competitions = await readLocalCompetitions();
+      const updatedCompetitions: Competition[] = [];
+
+      const nextCompetitions = competitions.map((competition) => {
+        if (!competitionIds.includes(competition.id)) {
+          return competition;
+        }
+
+        const updated = { ...competition, ...updates };
+        updatedCompetitions.push(updated);
+        return updated;
+      });
+
+      if (updatedCompetitions.length === 0) {
+        throw new Error("Tidak ada kompetisi yang ditemukan untuk diperbarui.");
+      }
+
+      if (updates.isPriority === true) {
+        const priorityCount = nextCompetitions.filter(
+          (c) => c.isPriority,
+        ).length;
+        if (priorityCount > MAX_PRIORITY_COMPETITIONS) {
+          throw new Error(
+            `Maksimal ${MAX_PRIORITY_COMPETITIONS} kompetisi dapat ditandai sebagai prioritas.`,
+          );
+        }
+      }
+
+      await writeLocalCompetitions(nextCompetitions);
+      return updatedCompetitions;
+    },
     async listSubmissions(): Promise<CompetitionSubmission[]> {
       const submissions = await readLocalSubmissions();
       return [...submissions].sort((left, right) =>
@@ -545,6 +603,55 @@ function createSupabaseCompetitionStore(supabase: SupabaseClient): CompetitionSt
       }
 
       return competitionId;
+    },
+    async bulkDeleteCompetitions(competitionIds: string[]): Promise<string[]> {
+      const { error } = await supabase
+        .from(competitionTableName)
+        .delete()
+        .in("id", competitionIds);
+
+      if (error) {
+        throw new Error(`Gagal menghapus data di Supabase: ${error.message}`);
+      }
+
+      return competitionIds;
+    },
+    async bulkUpdateCompetitions(
+      competitionIds: string[],
+      updates: Partial<Pick<Competition, "isPriority">>,
+    ): Promise<Competition[]> {
+      const supabaseUpdates: Record<string, unknown> = {};
+      if (updates.isPriority !== undefined) {
+        supabaseUpdates.isPriority = updates.isPriority;
+      }
+
+      const { data, error } = await supabase
+        .from(competitionTableName)
+        .update(supabaseUpdates)
+        .in("id", competitionIds)
+        .select(
+          "id,name,slug,organizer,category,regStart,regEnd,eventStart,eventEnd,isPriority,hasGuidebook,links",
+        );
+
+      if (error) {
+        throw new Error(
+          `Gagal memperbarui data di Supabase: ${error.message}`,
+        );
+      }
+
+      const competitions = await this.listCompetitions();
+      if (updates.isPriority === true) {
+        const priorityCount = competitions.filter((c) => c.isPriority).length;
+        if (priorityCount > MAX_PRIORITY_COMPETITIONS) {
+          throw new Error(
+            `Maksimal ${MAX_PRIORITY_COMPETITIONS} kompetisi dapat ditandai sebagai prioritas.`,
+          );
+        }
+      }
+
+      return (data ?? []).map((row) =>
+        fromSupabaseCompetitionRow(row as SupabaseCompetitionRow),
+      );
     },
     async listSubmissions(): Promise<CompetitionSubmission[]> {
       const { data, error } = await supabase

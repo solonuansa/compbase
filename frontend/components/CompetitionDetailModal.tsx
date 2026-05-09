@@ -1,5 +1,6 @@
 "use client";
 
+import { BookmarkButton } from "@/components/BookmarkButton";
 import { ShareButton } from "@/components/ShareButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { Competition } from "@/lib/types";
@@ -61,6 +62,10 @@ export function CompetitionDetailModal({
   const daysLeft = getDaysUntilDeadline(competition.regEnd, now);
   const websiteLink = getWebsiteLink(competition);
   const actionLinks = createActionLinks(competition);
+  const shareUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/?competition=${encodeURIComponent(competition.slug)}`
+      : undefined;
   const shareText = [
     `[${competition.name}]`,
     "",
@@ -97,16 +102,19 @@ export function CompetitionDetailModal({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:border-white/18 hover:text-zinc-50"
-          >
+          <div className="flex items-center gap-2">
+            <BookmarkButton competitionId={competition.id} size="lg" />
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:border-white/18 hover:text-zinc-50"
+            >
             <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               <path d="M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-          </button>
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-6 px-6 pb-7 pt-0 md:px-8 md:pb-9">
@@ -133,7 +141,11 @@ export function CompetitionDetailModal({
           </dl>
 
           <div className="flex flex-wrap gap-3">
-            <ShareButton shareText={shareText} />
+            <ShareButton
+              shareText={shareText}
+              shareUrl={shareUrl}
+              competitionName={competition.name}
+            />
 
             {actionLinks.map((item) => (
               <a

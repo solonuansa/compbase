@@ -144,10 +144,4 @@ pnpm dev:backend
 - `pnpm start:backend` menjalankan backend production mode.
 - `pnpm --filter backend migrate:supabase` migrasi data lokal ke Supabase.
 
-## Future Work
 
-- Notifikasi otomatis saat status pengajuan berubah.
-- Scheduler sinkronisasi/validasi tanggal kompetisi.
-- Auto-refresh ringan untuk status dan sisa waktu katalog (opsional, interval 1-5 menit, fokus hemat beban).
-- Integrasi upload aset (poster/banner) ke object storage.
-- Dashboard monitoring audit log (filter per admin/aksi/entitas).
