@@ -12,6 +12,7 @@ interface AdminCompetitionListPanelProps {
   competitions: Competition[];
   filteredCompetitions: Competition[];
   selectedCompetition: Competition | null;
+  selectedIds: Set<string>;
   now: Date;
   isMutationPending: boolean;
   searchValue: string;
@@ -25,12 +26,15 @@ interface AdminCompetitionListPanelProps {
   onStatusFilterChange: (value: AdminCompetitionStatusFilter) => void;
   onAddCompetition: () => void;
   onSelectCompetition: (competitionId: string) => void;
+  onToggleSelect: (competitionId: string) => void;
+  onSelectAll: () => void;
 }
 
 export function AdminCompetitionListPanel({
   competitions,
   filteredCompetitions,
   selectedCompetition,
+  selectedIds,
   now,
   isMutationPending,
   searchValue,
@@ -44,6 +48,8 @@ export function AdminCompetitionListPanel({
   onStatusFilterChange,
   onAddCompetition,
   onSelectCompetition,
+  onToggleSelect,
+  onSelectAll,
 }: AdminCompetitionListPanelProps) {
   return (
     <aside
@@ -128,23 +134,64 @@ export function AdminCompetitionListPanel({
       </div>
 
       <div className="subtle-scrollbar mt-5 min-h-0 flex-1 overflow-y-auto pr-2">
+        <div className="mb-2 flex items-center gap-3 px-1">
+          <button
+            type="button"
+            onClick={onSelectAll}
+            className="inline-flex h-8 items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 text-xs font-medium text-zinc-400 transition hover:border-white/20 hover:text-zinc-200"
+          >
+            {filteredCompetitions.length > 0 &&
+            filteredCompetitions.every((c) => selectedIds.has(c.id))
+              ? "Hapus semua"
+              : "Pilih semua"}
+          </button>
+          {selectedIds.size > 0 ? (
+            <span className="text-xs text-zinc-500">
+              {selectedIds.size} terpilih
+            </span>
+          ) : null}
+        </div>
         <div className="grid gap-3">
           {filteredCompetitions.map((competition) => {
+            const isSelected = selectedIds.has(competition.id);
             const status = getCompetitionStatus(competition, now);
             const isActive = competition.id === selectedCompetition?.id;
             const validationErrors = validateCompetition(competition);
 
             return (
-              <button
+              <div
                 key={competition.id}
-                type="button"
-                onClick={() => onSelectCompetition(competition.id)}
                 className={`rounded-[1.2rem] border p-4 text-left transition ${
                   isActive
                     ? "border-amber-200/24 bg-amber-200/10 shadow-[0_18px_38px_-32px_oklch(0.82_0.07_85)]"
                     : "border-white/8 bg-white/[0.025] hover:border-white/16 hover:bg-white/[0.04]"
-                }`}
+                } ${isSelected ? "ring-1 ring-amber-200/20" : ""}`}
               >
+                <div className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onToggleSelect(competition.id);
+                    }}
+                    aria-label={isSelected ? `Hapus pilihan ${competition.name}` : `Pilih ${competition.name}`}
+                    className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
+                      isSelected
+                        ? "border-amber-200/40 bg-amber-200/20 text-amber-100"
+                        : "border-white/20 bg-white/[0.04] text-transparent hover:border-white/40"
+                    }`}
+                  >
+                    {isSelected ? (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelectCompetition(competition.id)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-zinc-100 sm:text-sm">
@@ -183,6 +230,8 @@ export function AdminCompetitionListPanel({
                   ) : null}
                 </div>
               </button>
+                </div>
+              </div>
             );
           })}
 

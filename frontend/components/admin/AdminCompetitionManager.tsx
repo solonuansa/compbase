@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   approveSubmissionAction,
+  bulkDeleteCompetitionsAction,
+  bulkSetPriorityCompetitionsAction,
   createCompetitionAction,
   deleteCompetitionAction,
   deleteSubmissionAction,
@@ -12,8 +14,9 @@ import {
   updateCompetitionAction,
 } from "@/app/admin/actions";
 import { AdminCompetitionWorkspace } from "@/components/admin/AdminCompetitionWorkspace";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminSubmissionReviewPanel } from "@/components/admin/AdminSubmissionReviewPanel";
-import type { Competition, CompetitionSubmission } from "@/lib/types";
+import type { Competition, CompetitionStatus, CompetitionSubmission } from "@/lib/types";
 import { getCompetitionStatus } from "@/lib/utils/competitions";
 import {
   comparePriorityCompetition,
@@ -79,6 +82,14 @@ export function AdminCompetitionManager({
     null,
   );
   const [now] = useState(() => new Date());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmDialogState, setConfirmDialogState] = useState<{
+    open: boolean;
+    variant: "default" | "destructive";
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, variant: "default", title: "", message: "", onConfirm: () => {} });
 
   useEffect(() => {
     const editorPanelElement = editorPanelRef.current;
@@ -599,6 +610,189 @@ export function AdminCompetitionManager({
     }));
   };
 
+  const handleToggleSelect = (competitionId: string): void => {
+    setSelectedIds((currentSelectedIds) => {
+      const nextSelectedIds = new Set(currentSelectedIds);
+      if (nextSelectedIds.has(competitionId)) {
+        nextSelectedIds.delete(competitionId);
+      } else {
+        nextSelectedIds.add(competitionId);
+      }
+      return nextSelectedIds;
+    });
+  };
+
+  const handleSelectAll = (): void => {
+    const allFilteredIds = filteredCompetitions.map((c) => c.id);
+    const allSelected = allFilteredIds.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allFilteredIds));
+    }
+  };
+
+  const handleClearSelection = (): void => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = (): void => {
+    setConfirmDialogState({
+      open: true,
+      variant: "destructive",
+      title: "Hapus kompetisi massal",
+      message: `Yakin ingin menghapus ${selectedIds.size} kompetisi yang dipilih? Tindakan ini tidak bisa dibatalkan.`,
+      onConfirm: async () => {
+        const selectedIdsArray = Array.from(selectedIds);
+        startMutationTransition(async () => {
+          const mutationResult = await bulkDeleteCompetitionsAction(selectedIdsArray);
+          setConfirmDialogState((current) => ({ ...current, open: false }));
+
+          if (!mutationResult.ok) {
+            setSaveMessage(
+              mutationResult.errorMessage ?? "Kompetisi massal belum berhasil dihapus.",
+            );
+            return;
+          }
+
+          const deletedIdsSet = new Set(mutationResult.deletedIds);
+          setCompetitions((currentCompetitions) =>
+            currentCompetitions.filter((c) => !deletedIdsSet.has(c.id)),
+          );
+          setSavedCompetitions((currentCompetitions) =>
+            currentCompetitions.filter((c) => !deletedIdsSet.has(c.id)),
+          );
+          setSelectedIds(new Set());
+          setSaveMessage(`${mutationResult.deletedIds.length} kompetisi berhasil dihapus.`);
+        });
+      },
+    });
+  };
+
+  const handleBulkStatusChange = (status: CompetitionStatus): void => {
+    const selectedIdsArray = Array.from(selectedIds);
+    if (selectedIdsArray.length === 0) return;
+
+    startMutationTransition(async () => {
+      const nowMs = Date.now();
+      const updates = selectedIdsArray.map((competitionId) => {
+        const competition = competitions.find((c) => c.id === competitionId);
+        if (!competition) return null;
+
+        const updated = { ...competition };
+        if (status === "open") {
+          const yesterday = new Date(nowMs - 86400000);
+          updated.regStart = yesterday.toISOString().split("T")[0];
+          const futureDate = new Date(nowMs + 86400000 * 30);
+          updated.regEnd = futureDate.toISOString().split("T")[0];
+        } else if (status === "coming-soon") {
+          const futureDate = new Date(nowMs + 86400000 * 7);
+          const futureDateStr = futureDate.toISOString().split("T")[0];
+          updated.regStart = futureDateStr;
+          updated.regEnd = futureDateStr;
+        } else if (status === "closed") {
+          const pastDate = new Date(nowMs - 86400000 * 7);
+          const pastDateStr = pastDate.toISOString().split("T")[0];
+          updated.regStart = pastDateStr;
+          updated.regEnd = pastDateStr;
+        }
+        return updated;
+      }).filter((c): c is Competition => c !== null);
+
+      const results = await Promise.allSettled(
+        updates.map((updated) => updateCompetitionAction(updated.id, updated)),
+      );
+
+      const okCompetitions: Competition[] = [];
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value.ok && result.value.competition) {
+          okCompetitions.push(result.value.competition);
+        }
+      }
+
+      const allOk = okCompetitions.length === updates.length;
+
+      if (okCompetitions.length > 0) {
+        const okIds = new Set(okCompetitions.map((c) => c.id));
+        setCompetitions((currentCompetitions) =>
+          currentCompetitions.map((c) =>
+            okIds.has(c.id) ? okCompetitions.find((ok) => ok.id === c.id) ?? c : c,
+          ),
+        );
+        setSavedCompetitions((currentCompetitions) =>
+          currentCompetitions.map((c) =>
+            okIds.has(c.id) ? okCompetitions.find((ok) => ok.id === c.id) ?? c : c,
+          ),
+        );
+      }
+
+      setSelectedIds(new Set());
+      setSaveMessage(
+        allOk
+          ? `Status ${selectedIdsArray.length} kompetisi berhasil diperbarui.`
+          : `${okCompetitions.length} dari ${selectedIdsArray.length} kompetisi berhasil diperbarui statusnya.`,
+      );
+    });
+  };
+
+  const handleBulkSetPriority = (): void => {
+    const selectedIdsArray = Array.from(selectedIds);
+    if (selectedIdsArray.length === 0) return;
+
+    startMutationTransition(async () => {
+      const mutationResult = await bulkSetPriorityCompetitionsAction(selectedIdsArray, true);
+
+      if (!mutationResult.ok) {
+        setSaveMessage(
+          mutationResult.errorMessage ?? "Gagal menandai prioritas massal.",
+        );
+        return;
+      }
+
+      setCompetitions((currentCompetitions) =>
+        currentCompetitions.map((c) =>
+          selectedIdsArray.includes(c.id) ? { ...c, isPriority: true } : c,
+        ),
+      );
+      setSavedCompetitions((currentCompetitions) =>
+        currentCompetitions.map((c) =>
+          selectedIdsArray.includes(c.id) ? { ...c, isPriority: true } : c,
+        ),
+      );
+      setSelectedIds(new Set());
+      setSaveMessage(`${selectedIdsArray.length} kompetisi ditandai sebagai prioritas.`);
+    });
+  };
+
+  const handleBulkRemovePriority = (): void => {
+    const selectedIdsArray = Array.from(selectedIds);
+    if (selectedIdsArray.length === 0) return;
+
+    startMutationTransition(async () => {
+      const mutationResult = await bulkSetPriorityCompetitionsAction(selectedIdsArray, false);
+
+      if (!mutationResult.ok) {
+        setSaveMessage(
+          mutationResult.errorMessage ?? "Gagal menghapus prioritas massal.",
+        );
+        return;
+      }
+
+      setCompetitions((currentCompetitions) =>
+        currentCompetitions.map((c) =>
+          selectedIdsArray.includes(c.id) ? { ...c, isPriority: false } : c,
+        ),
+      );
+      setSavedCompetitions((currentCompetitions) =>
+        currentCompetitions.map((c) =>
+          selectedIdsArray.includes(c.id) ? { ...c, isPriority: false } : c,
+        ),
+      );
+      setSelectedIds(new Set());
+      setSaveMessage(`Prioritas dihapus dari ${selectedIdsArray.length} kompetisi.`);
+    });
+  };
+
   const handleDeleteSubmission = (submissionId: string): void => {
     startMutationTransition(async () => {
       const mutationResult = await deleteSubmissionAction(submissionId);
@@ -707,6 +901,7 @@ export function AdminCompetitionManager({
               competitions={competitions}
               filteredCompetitions={filteredCompetitions}
               selectedCompetition={selectedCompetition}
+              selectedIds={selectedIds}
               selectedValidationErrors={selectedValidationErrors}
               selectedPriorityOrder={selectedPriorityOrder}
               isSingleEventDate={isSingleEventDate}
@@ -744,6 +939,13 @@ export function AdminCompetitionManager({
               onTogglePriority={handleTogglePriority}
               onEventDateModeChange={handleEventDateModeChange}
               openDatePicker={openDatePicker}
+              onToggleSelect={handleToggleSelect}
+              onSelectAll={handleSelectAll}
+              onClearSelection={handleClearSelection}
+              onBulkDelete={handleBulkDelete}
+              onBulkStatusChange={handleBulkStatusChange}
+              onBulkSetPriority={handleBulkSetPriority}
+              onBulkRemovePriority={handleBulkRemovePriority}
             />
           </div>
         ) : (
@@ -760,6 +962,18 @@ export function AdminCompetitionManager({
           </div>
         )}
       </div>
+
+      <AdminConfirmDialog
+        open={confirmDialogState.open}
+        title={confirmDialogState.title}
+        message={confirmDialogState.message}
+        variant={confirmDialogState.variant}
+        isPending={isMutationPending}
+        onConfirm={() => {
+          confirmDialogState.onConfirm();
+        }}
+        onCancel={() => setConfirmDialogState((current) => ({ ...current, open: false }))}
+      />
     </main>
   );
 }

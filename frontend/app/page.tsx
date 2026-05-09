@@ -1,4 +1,5 @@
 ﻿import { unstable_cache } from "next/cache";
+import type { Metadata } from "next";
 import { CompetitionCatalog } from "@/components/CompetitionCatalog";
 import { FavoritesProvider } from "@/components/FavoritesContext";
 import { FilterBar } from "@/components/FilterBar";
@@ -11,6 +12,7 @@ import { getCompetitionsFromBackend } from "@/lib/utils/backend";
 import {
   createCompetitionHref,
   filterCompetitions,
+  findCompetitionBySlug,
   clampCompetitionPage,
   getCategoryOptions,
   getCompetitionStats,
@@ -50,6 +52,53 @@ function getPaginationPages(currentPage: number, totalPages: number): number[] {
   );
 }
 
+export async function generateMetadata({
+  searchParams,
+}: HomePageProps): Promise<Metadata> {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const competitionSlug =
+    typeof resolvedSearchParams.competition === "string"
+      ? resolvedSearchParams.competition.trim()
+      : null;
+
+  if (!competitionSlug) {
+    return {
+      title: "CompBase | Direktori Kompetisi",
+      description:
+        "CompBase membantu mahasiswa dan praktisi menemukan kompetisi Statistik & Data Science berdasarkan urgensi deadline.",
+      openGraph: {
+        title: "CompBase | Direktori Kompetisi",
+        description:
+          "CompBase membantu mahasiswa dan praktisi menemukan kompetisi Statistik & Data Science berdasarkan urgensi deadline.",
+        siteName: "CompBase",
+        type: "website",
+      },
+    };
+  }
+
+  const competitionResult = await getCachedCompetitions();
+  const competition = findCompetitionBySlug(
+    competitionResult.competitions,
+    competitionSlug,
+  );
+
+  if (!competition) {
+    return { title: "CompBase | Direktori Kompetisi" };
+  }
+
+  return {
+    title: `${competition.name} — CompBase`,
+    description: `${competition.name} oleh ${competition.organizer} — kategori ${competition.category}. Deadline: ${competition.regEnd}.`,
+    openGraph: {
+      title: `${competition.name} — CompBase`,
+      description: `${competition.name} oleh ${competition.organizer} — kategori ${competition.category}. Deadline: ${competition.regEnd}.`,
+      siteName: "CompBase",
+      type: "website",
+      url: `/?competition=${encodeURIComponent(competition.slug)}`,
+    },
+  };
+}
+
 const getCachedCompetitions = unstable_cache(
   async () => getCompetitionsFromBackend(),
   ["competitions-list"],
@@ -63,6 +112,13 @@ export default async function Home({ searchParams }: HomePageProps) {
   const currentYear = now.getFullYear();
   const competitionResult = await getCachedCompetitions();
   const allCompetitions = competitionResult.competitions;
+  const competitionSlug =
+    typeof resolvedSearchParams.competition === "string"
+      ? resolvedSearchParams.competition.trim()
+      : null;
+  const initialCompetition = competitionSlug
+    ? findCompetitionBySlug(allCompetitions, competitionSlug)
+    : null;
 
   const competitionBaseFilters = {
     query: filters.query,
@@ -138,6 +194,7 @@ export default async function Home({ searchParams }: HomePageProps) {
             spotlightCompetitions={spotlightCompetitions}
             totalCompetitions={totalFilteredCompetitions}
             now={now}
+            initialCompetition={initialCompetition ?? undefined}
           >
             <section className="soft-panel rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-4 py-4 sm:px-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

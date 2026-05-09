@@ -28,6 +28,16 @@ interface CompetitionDeleteApiPayload {
   deletedId: string;
 }
 
+interface BulkDeleteApiPayload {
+  ok: boolean;
+  deletedIds: string[];
+}
+
+interface BulkUpdateApiPayload {
+  ok: boolean;
+  data: Competition[];
+}
+
 const DEFAULT_BACKEND_BASE_URL = "http://localhost:4000";
 const HEALTH_CHECK_TIMEOUT_MS = 1500;
 const COMPETITIONS_FETCH_TIMEOUT_MS = 3000;
@@ -164,6 +174,18 @@ function isCompetitionMutationApiPayload(
   }
 
   return payload.ok === true && isCompetition(payload.data);
+}
+
+function isBulkDeleteApiPayload(value: unknown): value is BulkDeleteApiPayload {
+  const payload = toRecord(value);
+  if (!payload) return false;
+  return payload.ok === true && Array.isArray(payload.deletedIds) && payload.deletedIds.every((id: unknown) => typeof id === "string");
+}
+
+function isBulkUpdateApiPayload(value: unknown): value is BulkUpdateApiPayload {
+  const payload = toRecord(value);
+  if (!payload) return false;
+  return payload.ok === true && Array.isArray(payload.data) && payload.data.every((item: unknown) => isCompetition(item));
 }
 
 function isCompetitionDeleteApiPayload(
@@ -393,6 +415,87 @@ export async function deleteCompetitionFromBackend(
 
     throw new Error(
       "Terjadi kendala saat menghapus data kompetisi di backend.",
+    );
+  }
+}
+
+export async function bulkDeleteCompetitionsInBackend(
+  competitionIds: string[],
+): Promise<string[]> {
+  const baseUrl = getBackendBaseUrl();
+
+  try {
+    const response = await fetch(`${baseUrl}/competitions/bulk`, {
+      method: "POST",
+      cache: "no-store",
+      headers: getMutationHeaders(true),
+      body: JSON.stringify({ action: "delete", ids: competitionIds }),
+      signal: AbortSignal.timeout(COMPETITIONS_FETCH_TIMEOUT_MS),
+    });
+    const payload = await parseResponsePayload(response);
+
+    if (!response.ok) {
+      throw new Error(
+        getBackendErrorMessage(payload) ??
+          "Backend gagal menghapus data kompetisi massal.",
+      );
+    }
+
+    if (!isBulkDeleteApiPayload(payload)) {
+      throw new Error(
+        "Format respons backend untuk penghapusan massal belum sesuai.",
+      );
+    }
+
+    return payload.deletedIds;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error(
+      "Terjadi kendala saat menghapus data kompetisi massal di backend.",
+    );
+  }
+}
+
+export async function bulkUpdateCompetitionsInBackend(
+  competitionIds: string[],
+  updates: Partial<Pick<Competition, "isPriority">>,
+): Promise<Competition[]> {
+  const baseUrl = getBackendBaseUrl();
+
+  try {
+    const response = await fetch(`${baseUrl}/competitions/bulk`, {
+      method: "POST",
+      cache: "no-store",
+      headers: getMutationHeaders(true),
+      body: JSON.stringify({ action: "update", ids: competitionIds, updates }),
+      signal: AbortSignal.timeout(COMPETITIONS_FETCH_TIMEOUT_MS),
+    });
+    const payload = await parseResponsePayload(response);
+
+    if (!response.ok) {
+      throw new Error(
+        getBackendErrorMessage(payload) ??
+          "Backend gagal memperbarui data kompetisi massal.",
+      );
+    }
+
+    if (!isBulkUpdateApiPayload(payload)) {
+      throw new Error(
+        "Format respons backend untuk pembaruan massal belum sesuai.",
+      );
+    }
+
+    return payload.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error(
+      "Terjadi kendala saat memperbarui data kompetisi massal di backend.",
     );
   }
 }

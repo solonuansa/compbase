@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { AdminBulkActionBar } from "@/components/admin/AdminBulkActionBar";
 import { AdminCompetitionEditorPanel } from "@/components/admin/AdminCompetitionEditorPanel";
 import { AdminCompetitionListPanel } from "@/components/admin/AdminCompetitionListPanel";
 import type {
@@ -6,12 +7,13 @@ import type {
   EditableCompetitionField,
   EditableCompetitionLink,
 } from "@/components/admin/AdminCompetitionManager.utils";
-import type { Competition } from "@/lib/types";
+import type { Competition, CompetitionStatus } from "@/lib/types";
 
 interface AdminCompetitionWorkspaceProps {
   competitions: Competition[];
   filteredCompetitions: Competition[];
   selectedCompetition: Competition | null;
+  selectedIds: Set<string>;
   selectedValidationErrors: string[];
   selectedPriorityOrder: number | null;
   isSingleEventDate: boolean;
@@ -49,12 +51,20 @@ interface AdminCompetitionWorkspaceProps {
   onTogglePriority: () => void;
   onEventDateModeChange: (mode: "single" | "range") => void;
   openDatePicker: (inputElement: HTMLInputElement | null) => void;
+  onToggleSelect: (competitionId: string) => void;
+  onSelectAll: () => void;
+  onClearSelection: () => void;
+  onBulkDelete: () => void;
+  onBulkStatusChange: (status: CompetitionStatus) => void;
+  onBulkSetPriority: () => void;
+  onBulkRemovePriority: () => void;
 }
 
 export function AdminCompetitionWorkspace({
   competitions,
   filteredCompetitions,
   selectedCompetition,
+  selectedIds,
   selectedValidationErrors,
   selectedPriorityOrder,
   isSingleEventDate,
@@ -92,6 +102,13 @@ export function AdminCompetitionWorkspace({
   onTogglePriority,
   onEventDateModeChange,
   openDatePicker,
+  onToggleSelect,
+  onSelectAll,
+  onClearSelection,
+  onBulkDelete,
+  onBulkStatusChange,
+  onBulkSetPriority,
+  onBulkRemovePriority,
 }: AdminCompetitionWorkspaceProps) {
   return (
     <div className="flex flex-col gap-6">
@@ -141,6 +158,7 @@ export function AdminCompetitionWorkspace({
           competitions={competitions}
           filteredCompetitions={filteredCompetitions}
           selectedCompetition={selectedCompetition}
+          selectedIds={selectedIds}
           now={now}
           isMutationPending={isMutationPending}
           searchValue={searchValue}
@@ -154,6 +172,8 @@ export function AdminCompetitionWorkspace({
           onStatusFilterChange={onStatusFilterChange}
           onAddCompetition={onAddCompetition}
           onSelectCompetition={onSelectCompetition}
+          onToggleSelect={onToggleSelect}
+          onSelectAll={onSelectAll}
         />
 
         <AdminCompetitionEditorPanel
@@ -183,6 +203,16 @@ export function AdminCompetitionWorkspace({
           openDatePicker={openDatePicker}
         />
       </section>
+
+      <AdminBulkActionBar
+        selectedCount={selectedIds.size}
+        isPending={isMutationPending}
+        onBulkDelete={onBulkDelete}
+        onBulkStatusChange={onBulkStatusChange}
+        onBulkSetPriority={onBulkSetPriority}
+        onBulkRemovePriority={onBulkRemovePriority}
+        onClearSelection={onClearSelection}
+      />
     </div>
   );
 }

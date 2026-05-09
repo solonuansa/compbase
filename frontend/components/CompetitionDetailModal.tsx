@@ -62,6 +62,10 @@ export function CompetitionDetailModal({
   const daysLeft = getDaysUntilDeadline(competition.regEnd, now);
   const websiteLink = getWebsiteLink(competition);
   const actionLinks = createActionLinks(competition);
+  const shareUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/?competition=${encodeURIComponent(competition.slug)}`
+      : undefined;
   const shareText = [
     `[${competition.name}]`,
     "",
@@ -137,7 +141,11 @@ export function CompetitionDetailModal({
           </dl>
 
           <div className="flex flex-wrap gap-3">
-            <ShareButton shareText={shareText} />
+            <ShareButton
+              shareText={shareText}
+              shareUrl={shareUrl}
+              competitionName={competition.name}
+            />
 
             {actionLinks.map((item) => (
               <a

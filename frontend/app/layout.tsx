@@ -15,13 +15,23 @@ const brandFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "CompBase | Direktori Kompetisi",
+  title: {
+    default: "CompBase | Direktori Kompetisi",
+    template: "%s — CompBase",
+  },
   description:
     "CompBase membantu mahasiswa dan praktisi menemukan kompetisi Statistik & Data Science berdasarkan urgensi deadline.",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
     apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "CompBase | Direktori Kompetisi",
+    description:
+      "CompBase membantu mahasiswa dan praktisi menemukan kompetisi Statistik & Data Science berdasarkan urgensi deadline.",
+    siteName: "CompBase",
+    type: "website",
   },
 };
 

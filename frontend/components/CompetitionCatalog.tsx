@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { CompetitionDetailModal } from "@/components/CompetitionDetailModal";
 import { useFavorites } from "@/components/FavoritesContext";
@@ -15,6 +15,7 @@ interface CompetitionCatalogProps {
   spotlightCompetitions: Competition[];
   totalCompetitions: number;
   now: Date;
+  initialCompetition?: Competition;
   children?: ReactNode;
 }
 
@@ -24,10 +25,11 @@ export function CompetitionCatalog({
   spotlightCompetitions,
   totalCompetitions,
   now,
+  initialCompetition,
   children,
 }: CompetitionCatalogProps) {
   const [activeCompetition, setActiveCompetition] = useState<Competition | null>(
-    null,
+    initialCompetition ?? null,
   );
   const { showFavoritesOnly } = useFavorites();
   const { bookmarkedIds } = useBookmarks();

@@ -497,6 +497,13 @@ export function createCompetitionHref(
   return `/?${query}`;
 }
 
+export function findCompetitionBySlug(
+  competitions: Competition[],
+  slug: string,
+): Competition | undefined {
+  return competitions.find((competition) => competition.slug === slug);
+}
+
 export function clampCompetitionPage(
   requestedPage: number,
   totalItems: number,

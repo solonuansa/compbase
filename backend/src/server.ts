@@ -43,6 +43,18 @@ interface DeleteCompetitionResponse {
   source: "supabase" | "local";
 }
 
+interface BulkDeleteCompetitionsResponse {
+  ok: true;
+  deletedIds: string[];
+  source: "supabase" | "local";
+}
+
+interface BulkUpdateCompetitionsResponse {
+  ok: true;
+  data: Competition[];
+  source: "supabase" | "local";
+}
+
 interface SubmissionsResponse {
   ok: true;
   data: CompetitionSubmission[];
@@ -129,6 +141,8 @@ function sendJson(
     | CompetitionsResponse
     | CompetitionResponse
     | DeleteCompetitionResponse
+    | BulkDeleteCompetitionsResponse
+    | BulkUpdateCompetitionsResponse
     | SubmissionsResponse
     | SubmissionResponse
     | SubmissionActionResponse
@@ -343,6 +357,70 @@ async function handleUpdateCompetition(
   }
 }
 
+async function handleBulkCompetitions(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  try {
+    const rawPayload = await readRequestBody(req);
+    const payload = rawPayload as Record<string, unknown>;
+
+    if (!payload || typeof payload !== "object") {
+      sendJson(res, 400, { ok: false, error: "Payload harus berupa JSON object." });
+      return;
+    }
+
+    const action = String(payload.action ?? "");
+    const ids = (payload.ids as string[]) ?? [];
+    const updates = payload.updates as Record<string, unknown> ?? {};
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      sendJson(res, 400, { ok: false, error: "Array ID kompetisi wajib diisi." });
+      return;
+    }
+
+    if (action === "delete") {
+      const deletedIds = await competitionStore.bulkDeleteCompetitions(ids);
+      sendJson(res, 200, {
+        ok: true,
+        deletedIds,
+        source: competitionStore.source,
+      });
+      return;
+    }
+
+    if (action === "update") {
+      const sanitizedUpdates: Partial<Pick<Competition, "isPriority">> = {};
+      if (typeof updates.isPriority === "boolean") {
+        sanitizedUpdates.isPriority = updates.isPriority;
+      }
+
+      const updatedCompetitions = await competitionStore.bulkUpdateCompetitions(
+        ids,
+        sanitizedUpdates,
+      );
+      sendJson(res, 200, {
+        ok: true,
+        data: updatedCompetitions,
+        source: competitionStore.source,
+      });
+      return;
+    }
+
+    sendJson(res, 400, {
+      ok: false,
+      error: 'Aksi tidak valid. Gunakan "delete" atau "update".',
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Gagal memproses operasi massal.";
+
+    sendJson(res, 400, { ok: false, error: message });
+  }
+}
+
 async function handleDeleteCompetition(
   res: ServerResponse,
   competitionId: string,
@@ -520,6 +598,11 @@ async function handleRequest(
 
   if (pathname === "/competitions" && req.method === "POST") {
     await handleCreateCompetition(req, res);
+    return;
+  }
+
+  if (pathname === "/competitions/bulk" && req.method === "POST") {
+    await handleBulkCompetitions(req, res);
     return;
   }
 

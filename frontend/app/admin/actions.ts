@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { competitionSchema } from "@/lib/schemas";
 import type { Competition } from "@/lib/types";
 import {
+  bulkDeleteCompetitionsInBackend,
+  bulkUpdateCompetitionsInBackend,
   createCompetitionInBackend,
   deleteCompetitionFromBackend,
   updateCompetitionInBackend,
@@ -56,6 +58,19 @@ export interface AdminSubmissionDeleteState {
   submissionId: string | null;
   errorMessage: string | null;
 }
+
+export interface AdminBulkDeleteState {
+  ok: boolean;
+  deletedIds: string[];
+  errorMessage: string | null;
+}
+
+export interface AdminBulkUpdateState {
+  ok: boolean;
+  errorMessage: string | null;
+}
+
+export type AdminBulkStatus = "open" | "coming-soon" | "closed";
 
 function getTextValue(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
@@ -399,6 +414,90 @@ export async function deleteSubmissionAction(
     return {
       ok: false,
       submissionId: null,
+      errorMessage: getUnknownErrorMessage(error),
+    };
+  }
+}
+
+export async function bulkDeleteCompetitionsAction(
+  competitionIds: string[],
+): Promise<AdminBulkDeleteState> {
+  await requireAdminSession();
+
+  if (competitionIds.length === 0) {
+    return {
+      ok: false,
+      deletedIds: [],
+      errorMessage: "Pilih minimal satu kompetisi untuk dihapus.",
+    };
+  }
+
+  try {
+    const deletedIds = await bulkDeleteCompetitionsInBackend(competitionIds);
+    const adminEmail = await getAdminEmailFromSession();
+
+    if (adminEmail) {
+      await logAdminAudit(
+        adminEmail,
+        "bulk-delete",
+        "competition",
+        deletedIds.join(","),
+        null,
+        null,
+      );
+    }
+    revalidateTag("competitions", "default");
+
+    return {
+      ok: true,
+      deletedIds,
+      errorMessage: null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      deletedIds: [],
+      errorMessage: getUnknownErrorMessage(error),
+    };
+  }
+}
+
+export async function bulkSetPriorityCompetitionsAction(
+  competitionIds: string[],
+  isPriority: boolean,
+): Promise<AdminBulkUpdateState> {
+  await requireAdminSession();
+
+  if (competitionIds.length === 0) {
+    return {
+      ok: false,
+      errorMessage: "Pilih minimal satu kompetisi untuk diperbarui.",
+    };
+  }
+
+  try {
+    await bulkUpdateCompetitionsInBackend(competitionIds, { isPriority });
+    const adminEmail = await getAdminEmailFromSession();
+
+    if (adminEmail) {
+      await logAdminAudit(
+        adminEmail,
+        isPriority ? "bulk-set-priority" : "bulk-remove-priority",
+        "competition",
+        competitionIds.join(","),
+        null,
+        null,
+      );
+    }
+    revalidateTag("competitions", "default");
+
+    return {
+      ok: true,
+      errorMessage: null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
       errorMessage: getUnknownErrorMessage(error),
     };
   }
