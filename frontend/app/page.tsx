@@ -125,6 +125,7 @@ export default async function Home({ searchParams }: HomePageProps) {
     category: filters.category,
     sort: filters.sort,
     tab: filters.tab,
+    view: filters.view,
   };
   const filteredCompetitions = sortCompetitions(
     filterCompetitions(allCompetitions, filters, now),
@@ -194,22 +195,23 @@ export default async function Home({ searchParams }: HomePageProps) {
             spotlightCompetitions={spotlightCompetitions}
             totalCompetitions={totalFilteredCompetitions}
             now={now}
+            initialView={filters.view}
             initialCompetition={initialCompetition ?? undefined}
           >
             <section className="soft-panel rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-4 py-4 sm:px-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-base font-semibold text-zinc-100 sm:text-[1.05rem]">
+                  <p className="text-sm font-semibold text-zinc-100 sm:text-[1.05rem]">
                     Punya kompetisi yang belum ada di CompBase?
                   </p>
-                  <p className="mt-1 text-base text-zinc-400">
+                  <p className="mt-1 text-sm text-zinc-400 sm:text-base">
                     Ajukan kompetisimu untuk direview admin sebelum masuk katalog publik.
                   </p>
                 </div>
 
                 <Link
                   href="/ajukan-kompetisi"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-amber-200/20 bg-amber-200/12 px-5 text-base font-semibold text-amber-100 transition hover:border-amber-200/30 hover:bg-amber-200/20"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full border border-amber-200/20 bg-amber-200/12 px-5 text-sm font-semibold text-amber-100 transition hover:border-amber-200/30 hover:bg-amber-200/20 sm:w-auto sm:text-base"
                 >
                   Mau Tambah Kompetisimu?
                 </Link>
@@ -241,10 +243,10 @@ export default async function Home({ searchParams }: HomePageProps) {
             className="px-1 py-1"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-zinc-300">
+              <p className="text-xs text-zinc-300 sm:text-sm">
                 Halaman {currentPage} dari {totalPages}
               </p>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {previousPageHref ? (
                   <ScrollAwareLink
                     href={previousPageHref}

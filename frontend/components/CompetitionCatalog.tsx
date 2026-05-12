@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CompetitionDetailModal } from "@/components/CompetitionDetailModal";
 import { useFavorites } from "@/components/FavoritesContext";
 import { CompetitionGrid } from "@/components/CompetitionGrid";
+import { CompetitionTimeline } from "@/components/CompetitionTimeline";
 import { SpotlightSection } from "@/components/SpotlightSection";
 import { useBookmarks } from "@/hooks/useBookmarks";
-import type { Competition } from "@/lib/types";
+import type { Competition, CompetitionView } from "@/lib/types";
 
 interface CompetitionCatalogProps {
   competitions: Competition[];
@@ -15,6 +17,7 @@ interface CompetitionCatalogProps {
   spotlightCompetitions: Competition[];
   totalCompetitions: number;
   now: Date;
+  initialView: CompetitionView;
   initialCompetition?: Competition;
   children?: ReactNode;
 }
@@ -25,14 +28,34 @@ export function CompetitionCatalog({
   spotlightCompetitions,
   totalCompetitions,
   now,
+  initialView,
   initialCompetition,
   children,
 }: CompetitionCatalogProps) {
   const [activeCompetition, setActiveCompetition] = useState<Competition | null>(
     initialCompetition ?? null,
   );
+  const [viewMode, setViewMode] = useState<CompetitionView>(initialView);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { showFavoritesOnly } = useFavorites();
   const { bookmarkedIds } = useBookmarks();
+
+  const handleChangeView = (nextView: CompetitionView): void => {
+    setViewMode(nextView);
+    const nextParams = new URLSearchParams(searchParams.toString());
+
+    if (nextView === "grid") {
+      nextParams.delete("view");
+    } else {
+      nextParams.set("view", nextView);
+    }
+
+    const nextQuery = nextParams.toString();
+    const nextHref = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    router.replace(nextHref, { scroll: false });
+  };
 
   const handleOpenDetail = (competition: Competition): void => {
     setActiveCompetition(competition);
@@ -93,19 +116,67 @@ export function CompetitionCatalog({
           </p>
         </section>
       ) : (
-        <CompetitionGrid
-          competitions={displayedCompetitions}
-          totalCompetitions={displayedTotal}
-          now={now}
-          onOpenDetail={handleOpenDetail}
-        />
+        <section className="space-y-4">
+          <div className="flex items-center justify-end">
+            <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] p-1">
+              <button
+                type="button"
+                onClick={() => handleChangeView("grid")}
+                aria-pressed={viewMode === "grid"}
+                className={`inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium transition ${
+                  viewMode === "grid"
+                    ? "bg-violet-300/20 text-violet-100"
+                    : "text-zinc-300 hover:text-zinc-100"
+                }`}
+              >
+                Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChangeView("timeline")}
+                aria-pressed={viewMode === "timeline"}
+                className={`inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium transition ${
+                  viewMode === "timeline"
+                    ? "bg-violet-300/20 text-violet-100"
+                    : "text-zinc-300 hover:text-zinc-100"
+                }`}
+              >
+                Timeline
+              </button>
+            </div>
+          </div>
+
+          <div key={viewMode} className="view-enter">
+            {viewMode === "grid" ? (
+              <CompetitionGrid
+                competitions={displayedCompetitions}
+                totalCompetitions={displayedTotal}
+                now={now}
+                onOpenDetail={handleOpenDetail}
+              />
+            ) : (
+              <CompetitionTimeline
+                competitions={displayedCompetitions}
+                totalCompetitions={displayedTotal}
+                now={now}
+                onOpenDetail={handleOpenDetail}
+              />
+            )}
+          </div>
+        </section>
       )}
 
       {activeCompetition ? (
         <CompetitionDetailModal
           competition={activeCompetition}
+          similarCompetitions={allCompetitions.filter(
+            (c) =>
+              c.category === activeCompetition.category &&
+              c.id !== activeCompetition.id,
+          ).slice(0, 3)}
           now={now}
           onClose={handleCloseDetail}
+          onOpenDetail={handleOpenDetail}
         />
       ) : null}
     </>

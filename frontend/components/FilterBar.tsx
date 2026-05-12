@@ -130,7 +130,7 @@ export function FilterBar({
               href={tab.href}
               scroll={false}
               onClick={() => saveScrollPosition()}
-              className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-base font-medium transition duration-200 hover:-translate-y-0.5 ${
+              className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-medium transition duration-200 hover:-translate-y-0.5 ${
                 tab.isActive && !showFavoritesOnly
                   ? "border-violet-300/26 bg-violet-300/14 text-violet-100 shadow-[0_10px_28px_-20px_oklch(0.74_0.08_302)]"
                   : "border-white/7 bg-white/[0.025] text-zinc-300 hover:border-violet-200/28 hover:bg-violet-200/8 hover:text-zinc-100"
@@ -144,7 +144,7 @@ export function FilterBar({
             type="button"
             onClick={toggleFavorites}
             aria-pressed={showFavoritesOnly}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-base font-medium transition duration-200 hover:-translate-y-0.5 ${
+            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition duration-200 hover:-translate-y-0.5 ${
               showFavoritesOnly
                 ? "border-amber-300/26 bg-amber-300/14 text-amber-100 shadow-[0_10px_28px_-20px_oklch(0.74_0.08_80)]"
                 : "border-white/7 bg-white/[0.025] text-zinc-300 hover:border-amber-200/28 hover:bg-amber-200/8 hover:text-zinc-100"
@@ -183,26 +183,26 @@ export function FilterBar({
       >
         <input type="hidden" name="tab" value={activeTab} />
 
-        <label className="grid gap-2 text-base">
-          <span className="text-base font-semibold text-zinc-100">Cari lomba</span>
+        <label className="grid gap-2 text-sm">
+          <span className="text-sm font-semibold text-zinc-100">Cari lomba</span>
           <input
             type="text"
             name="q"
             value={queryValue}
             onChange={handleQueryChange}
             placeholder="Contoh: datathon, AI, dashboard"
-            className="h-14 rounded-[1.05rem] border border-white/8 bg-white/[0.04] px-4 text-base text-zinc-100 outline-none placeholder:text-zinc-400 ring-violet-300/35 transition duration-200 hover:border-violet-200/24 focus:border-violet-200/30 focus:ring"
+            className="h-12 rounded-[1.05rem] border border-white/8 bg-white/[0.04] px-4 text-sm text-zinc-100 outline-none placeholder:text-zinc-400 ring-violet-300/35 transition duration-200 hover:border-violet-200/24 focus:border-violet-200/30 focus:ring"
           />
         </label>
 
-        <label className="grid gap-2 text-base">
-          <span className="text-base font-semibold text-zinc-100">Kategori lomba</span>
+        <label className="grid gap-2 text-sm">
+          <span className="text-sm font-semibold text-zinc-100">Kategori lomba</span>
           <div className="relative">
             <select
               name="category"
               defaultValue={category}
               onChange={handleSelectChange}
-              className="h-14 w-full appearance-none rounded-[1.05rem] border border-white/8 bg-white/[0.04] px-4 pr-12 text-base text-zinc-100 outline-none ring-violet-300/35 transition duration-200 hover:border-violet-200/24 focus:border-violet-200/30 focus:ring [&>option]:bg-zinc-50 [&>option]:text-zinc-950"
+              className="h-12 w-full appearance-none rounded-[1.05rem] border border-white/8 bg-white/[0.04] px-4 pr-12 text-sm text-zinc-100 outline-none ring-violet-300/35 transition duration-200 hover:border-violet-200/24 focus:border-violet-200/30 focus:ring [&>option]:bg-zinc-50 [&>option]:text-zinc-950"
             >
               <option value="all">Semua kategori</option>
               {categories.map((value) => (
@@ -219,14 +219,14 @@ export function FilterBar({
           </div>
         </label>
 
-        <label className="grid gap-2 text-base">
-          <span className="text-base font-semibold text-zinc-100">Urutkan</span>
+        <label className="grid gap-2 text-sm">
+          <span className="text-sm font-semibold text-zinc-100">Urutkan</span>
           <div className="relative">
             <select
               name="sort"
               defaultValue={sort}
               onChange={handleSelectChange}
-              className="h-14 w-full appearance-none rounded-[1.05rem] border border-white/8 bg-white/[0.04] px-4 pr-12 text-base text-zinc-100 outline-none ring-violet-300/35 transition duration-200 hover:border-violet-200/24 focus:border-violet-200/30 focus:ring [&>option]:bg-zinc-50 [&>option]:text-zinc-950"
+              className="h-12 w-full appearance-none rounded-[1.05rem] border border-white/8 bg-white/[0.04] px-4 pr-12 text-sm text-zinc-100 outline-none ring-violet-300/35 transition duration-200 hover:border-violet-200/24 focus:border-violet-200/30 focus:ring [&>option]:bg-zinc-50 [&>option]:text-zinc-950"
             >
               <option value="deadline">Deadline pendaftaran</option>
               <option value="name">Nama A-Z</option>
@@ -239,10 +239,10 @@ export function FilterBar({
           </div>
         </label>
 
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3 sm:flex-nowrap">
           <button
             type="submit"
-            className="inline-flex h-14 min-w-28 items-center justify-center rounded-[1.05rem] bg-violet-200/88 px-5 text-lg font-semibold text-zinc-950 shadow-[0_18px_42px_-28px_oklch(0.76_0.08_302)] transition duration-200 hover:-translate-y-0.5 hover:bg-violet-200 hover:shadow-[0_22px_46px_-28px_oklch(0.74_0.08_302)]"
+            className="inline-flex h-12 flex-1 items-center justify-center rounded-[1.05rem] bg-violet-200/88 px-5 text-sm font-semibold text-zinc-950 shadow-[0_18px_42px_-28px_oklch(0.76_0.08_302)] transition duration-200 hover:-translate-y-0.5 hover:bg-violet-200 hover:shadow-[0_22px_46px_-28px_oklch(0.74_0.08_302)] sm:flex-none sm:min-w-28"
           >
             Cari
           </button>
@@ -255,7 +255,7 @@ export function FilterBar({
                 router.push(clearHref, { scroll: false });
               });
             }}
-            className="inline-flex h-14 items-center justify-center rounded-[1.05rem] border border-white/8 px-5 text-lg font-medium text-zinc-300 transition duration-200 hover:-translate-y-0.5 hover:border-violet-200/24 hover:bg-violet-200/8 hover:text-zinc-50"
+            className="inline-flex h-12 flex-1 items-center justify-center rounded-[1.05rem] border border-white/8 px-5 text-sm font-medium text-zinc-300 transition duration-200 hover:-translate-y-0.5 hover:border-violet-200/24 hover:bg-violet-200/8 hover:text-zinc-50 sm:flex-none"
           >
             Reset
           </button>

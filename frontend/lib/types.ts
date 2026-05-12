@@ -32,12 +32,14 @@ export type CompetitionCategory = (typeof COMPETITION_CATEGORIES)[number];
 export type CompetitionTab = "all" | "coming-soon" | "open";
 
 export type CompetitionSort = "deadline" | "name";
+export type CompetitionView = "grid" | "timeline";
 
 export interface CompetitionFilters {
   query: string;
   category: string;
   tab: CompetitionTab;
   sort: CompetitionSort;
+  view: CompetitionView;
   page: number;
 }
 

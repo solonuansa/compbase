@@ -7,6 +7,7 @@ import {
   type CompetitionStats,
   type CompetitionStatus,
   type CompetitionTab,
+  type CompetitionView,
 } from "@/lib/types";
 
 const DEFAULT_FILTERS: CompetitionFilters = {
@@ -14,6 +15,7 @@ const DEFAULT_FILTERS: CompetitionFilters = {
   category: "all",
   tab: "all",
   sort: "deadline",
+  view: "grid",
   page: 1,
 };
 
@@ -97,6 +99,10 @@ function isCompetitionSort(value: string): value is CompetitionSort {
   return ["deadline", "name"].includes(value);
 }
 
+function isCompetitionView(value: string): value is CompetitionView {
+  return ["grid", "timeline"].includes(value);
+}
+
 function parsePageValue(value: SearchParamValue): number {
   const rawPage = pickFirstValue(value).trim();
   const parsedPage = Number.parseInt(rawPage, 10);
@@ -165,10 +171,12 @@ export function parseCompetitionFilters(
   const category = normalizeCategoryLabel(rawCategory);
   const tabInput = pickFirstValue(searchParams.tab);
   const sortInput = pickFirstValue(searchParams.sort);
+  const viewInput = pickFirstValue(searchParams.view);
   const page = parsePageValue(searchParams.page);
 
   const normalizedTab = normalizeText(tabInput);
   const normalizedSort = normalizeText(sortInput);
+  const normalizedView = normalizeText(viewInput);
   const resolvedTab =
     normalizedTab === "closing-soon" ? "coming-soon" : normalizedTab;
 
@@ -179,6 +187,9 @@ export function parseCompetitionFilters(
     sort: isCompetitionSort(normalizedSort)
       ? normalizedSort
       : DEFAULT_FILTERS.sort,
+    view: isCompetitionView(normalizedView)
+      ? normalizedView
+      : DEFAULT_FILTERS.view,
     page,
   };
 }
@@ -482,6 +493,10 @@ export function createCompetitionHref(
 
   if (filters.sort && filters.sort !== "deadline") {
     params.set("sort", filters.sort);
+  }
+
+  if (filters.view && filters.view !== "grid") {
+    params.set("view", filters.view);
   }
 
   if (typeof filters.page === "number" && filters.page > 1) {
