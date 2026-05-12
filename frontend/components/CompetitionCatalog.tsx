@@ -146,21 +146,23 @@ export function CompetitionCatalog({
             </div>
           </div>
 
-          {viewMode === "grid" ? (
-            <CompetitionGrid
-              competitions={displayedCompetitions}
-              totalCompetitions={displayedTotal}
-              now={now}
-              onOpenDetail={handleOpenDetail}
-            />
-          ) : (
-            <CompetitionTimeline
-              competitions={displayedCompetitions}
-              totalCompetitions={displayedTotal}
-              now={now}
-              onOpenDetail={handleOpenDetail}
-            />
-          )}
+          <div key={viewMode} className="view-enter">
+            {viewMode === "grid" ? (
+              <CompetitionGrid
+                competitions={displayedCompetitions}
+                totalCompetitions={displayedTotal}
+                now={now}
+                onOpenDetail={handleOpenDetail}
+              />
+            ) : (
+              <CompetitionTimeline
+                competitions={displayedCompetitions}
+                totalCompetitions={displayedTotal}
+                now={now}
+                onOpenDetail={handleOpenDetail}
+              />
+            )}
+          </div>
         </section>
       )}
 

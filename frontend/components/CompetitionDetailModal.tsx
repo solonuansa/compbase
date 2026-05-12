@@ -1,5 +1,6 @@
 "use client";
 
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { ShareButton } from "@/components/ShareButton";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -62,6 +63,7 @@ export function CompetitionDetailModal({
   onClose,
   onOpenDetail,
 }: CompetitionDetailModalProps) {
+  const containerRef = useFocusTrap(onClose, true);
   const status = getCompetitionStatus(competition, now);
   const daysLeft = getDaysUntilDeadline(competition.regEnd, now);
   const websiteLink = getWebsiteLink(competition);
@@ -81,7 +83,13 @@ export function CompetitionDetailModal({
   ].join("\n");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Detail ${competition.name}`}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+    >
       <button
         type="button"
         onClick={onClose}
