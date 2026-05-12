@@ -125,6 +125,7 @@ export default async function Home({ searchParams }: HomePageProps) {
     category: filters.category,
     sort: filters.sort,
     tab: filters.tab,
+    view: filters.view,
   };
   const filteredCompetitions = sortCompetitions(
     filterCompetitions(allCompetitions, filters, now),
@@ -194,6 +195,7 @@ export default async function Home({ searchParams }: HomePageProps) {
             spotlightCompetitions={spotlightCompetitions}
             totalCompetitions={totalFilteredCompetitions}
             now={now}
+            initialView={filters.view}
             initialCompetition={initialCompetition ?? undefined}
           >
             <section className="soft-panel rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-4 py-4 sm:px-5">
