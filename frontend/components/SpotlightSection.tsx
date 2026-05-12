@@ -39,11 +39,11 @@ export function SpotlightSection({
       <div className="flex flex-wrap items-end justify-between gap-3 text-center sm:text-left">
         <div className="w-full sm:w-auto">
           <p className="section-kicker">Pilihan cepat</p>
-          <h2 className="mt-2 font-brand text-[1.85rem] text-zinc-50 sm:text-[2.05rem]">
+          <h2 className="mt-2 font-brand text-[1.55rem] text-zinc-50 sm:text-[2.05rem]">
             Deadline pendaftaran
           </h2>
         </div>
-        <p className="mx-auto max-w-sm text-[0.95rem] leading-relaxed text-zinc-400 sm:mx-0">
+        <p className="mx-auto max-w-sm text-[0.85rem] leading-relaxed text-zinc-400 sm:mx-0 sm:text-[0.95rem]">
           Kalau mau mulai dari yang paling urgent, cek bagian ini dulu.
         </p>
       </div>
@@ -145,19 +145,19 @@ export function SpotlightSection({
                     <StatusBadge status={status} size="sm" />
                   </div>
 
-                  <h3 className="mt-2 text-[1.28rem] font-semibold leading-tight text-zinc-50">
+                  <h3 className="mt-2 text-[1.1rem] font-semibold leading-tight text-zinc-50 sm:text-[1.28rem]">
                     {competition.name}
                   </h3>
-                  <p className="mt-1.5 text-[0.98rem] leading-relaxed text-zinc-300">
+                  <p className="mt-1.5 text-[0.85rem] leading-relaxed text-zinc-300 sm:text-[0.98rem]">
                     {competition.category} | {competition.organizer}
                   </p>
 
-                  <div className="mt-2 grid gap-1.5 pt-1.5 text-[0.95rem] text-zinc-300">
+                  <div className="mt-2 grid gap-1.5 pt-1.5 text-[0.85rem] text-zinc-300 sm:text-[0.95rem]">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">
                         Deadline pendaftaran
                       </span>
-                      <span className="text-[1rem] font-semibold leading-tight text-zinc-100">
+                      <span className="text-[0.95rem] font-semibold leading-tight text-zinc-100 sm:text-[1rem]">
                         {formatDate(competition.regEnd)}
                       </span>
                     </div>

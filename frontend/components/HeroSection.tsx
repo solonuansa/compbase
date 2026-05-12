@@ -19,18 +19,18 @@ export function HeroSection({ stats }: HeroSectionProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-          <div className="rounded-[1.1rem] border border-white/7 bg-white/[0.04] px-4 py-3 text-center">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Aktif</p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-50">{stats.open}</p>
+        <div className="grid grid-cols-3 gap-2 sm:max-w-md sm:gap-3">
+          <div className="rounded-[1.1rem] border border-white/7 bg-white/[0.04] px-3 py-2.5 text-center sm:px-4 sm:py-3">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 sm:text-[11px]">Aktif</p>
+            <p className="mt-1.5 text-xl font-semibold text-zinc-50 sm:mt-2 sm:text-2xl">{stats.open}</p>
           </div>
-          <div className="rounded-[1.1rem] border border-white/7 bg-white/[0.04] px-4 py-3 text-center">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Coming Soon</p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-50">{stats.comingSoon}</p>
+          <div className="rounded-[1.1rem] border border-white/7 bg-white/[0.04] px-3 py-2.5 text-center sm:px-4 sm:py-3">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 sm:text-[11px]">Coming Soon</p>
+            <p className="mt-1.5 text-xl font-semibold text-zinc-50 sm:mt-2 sm:text-2xl">{stats.comingSoon}</p>
           </div>
-          <div className="rounded-[1.1rem] border border-white/7 bg-white/[0.04] px-4 py-3 text-center">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Semua</p>
-            <p className="mt-2 text-2xl font-semibold text-zinc-50">{stats.total}</p>
+          <div className="rounded-[1.1rem] border border-white/7 bg-white/[0.04] px-3 py-2.5 text-center sm:px-4 sm:py-3">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 sm:text-[11px]">Semua</p>
+            <p className="mt-1.5 text-xl font-semibold text-zinc-50 sm:mt-2 sm:text-2xl">{stats.total}</p>
           </div>
         </div>
       </div>

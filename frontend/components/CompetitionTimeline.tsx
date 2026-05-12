@@ -194,19 +194,59 @@ export function CompetitionTimeline({
   }
 
   const timelineGroups = buildTimelineGroups(competitions, now);
+  const currentMonthKey = getCurrentMonthKey(now);
 
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3 text-center sm:text-left">
         <div className="w-full sm:w-auto">
           <p className="section-kicker">Timeline lomba</p>
-          <h2 className="mt-2 font-brand text-[1.85rem] text-zinc-50 sm:text-[2.15rem]">
+          <h2 className="mt-2 font-brand text-[1.55rem] text-zinc-50 sm:text-[2.15rem]">
             Lihat jadwal berdasarkan bulan
           </h2>
         </div>
-        <p className="mx-auto max-w-sm text-[0.95rem] leading-relaxed text-zinc-300 sm:mx-0">
+        <p className="mx-auto max-w-sm text-[0.85rem] leading-relaxed text-zinc-300 sm:mx-0 sm:text-[0.95rem]">
           Menampilkan {competitions.length} dari {totalCompetitions} lomba dalam urutan waktu.
         </p>
+        {timelineGroups.some((g) => !g.isCurrentMonth) ? (
+          <button
+            type="button"
+            onClick={() =>
+              document
+                .getElementById(`month-${currentMonthKey}`)
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="text-sm text-violet-200/80 transition hover:text-violet-100"
+          >
+            &larr; Kembali ke bulan ini
+          </button>
+        ) : null}
+      </div>
+
+      <div className="sticky -top-1 z-10 -mx-4 overflow-x-auto border-b border-white/[0.06] bg-zinc-950/70 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex items-center gap-2">
+          {timelineGroups.map((group) => (
+            <button
+              key={group.key}
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(`month-${group.key}`)
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] transition ${
+                group.isCurrentMonth
+                  ? "bg-violet-300/18 text-violet-100"
+                  : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200"
+              }`}
+            >
+              {group.label}
+              <span className="text-[10px] opacity-60">
+                {group.items.length}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="hidden gap-4 overflow-x-auto pb-2 md:flex">
@@ -215,8 +255,14 @@ export function CompetitionTimeline({
             key={group.key}
             className="soft-panel min-h-[24rem] w-[22rem] shrink-0 rounded-3xl border border-white/10 bg-white/[0.03] p-4"
           >
-            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-zinc-300">
+            <h3
+              id={`month-${group.key}`}
+              className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-zinc-300"
+            >
               {group.label}
+              <span className="text-xs text-zinc-500">
+                ({group.items.length})
+              </span>
               {group.isCurrentMonth ? (
                 <span className="rounded-full border border-emerald-300/30 bg-emerald-300/14 px-2 py-0.5 text-[10px] tracking-[0.08em] text-emerald-100">
                   Bulan ini
@@ -243,8 +289,14 @@ export function CompetitionTimeline({
             key={group.key}
             className="soft-panel rounded-3xl border border-white/10 bg-white/[0.03] p-4"
           >
-            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-zinc-300">
+            <h3
+              id={`month-${group.key}`}
+              className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-zinc-300"
+            >
               {group.label}
+              <span className="text-xs text-zinc-500">
+                ({group.items.length})
+              </span>
               {group.isCurrentMonth ? (
                 <span className="rounded-full border border-emerald-300/30 bg-emerald-300/14 px-2 py-0.5 text-[10px] tracking-[0.08em] text-emerald-100">
                   Bulan ini
