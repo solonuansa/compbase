@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useMemo, type RefObject } from "react";
 import { AdminBulkActionBar } from "@/components/admin/AdminBulkActionBar";
 import { AdminCompetitionEditorPanel } from "@/components/admin/AdminCompetitionEditorPanel";
 import { AdminCompetitionListPanel } from "@/components/admin/AdminCompetitionListPanel";
@@ -8,6 +8,7 @@ import type {
   EditableCompetitionLink,
 } from "@/components/admin/AdminCompetitionManager.utils";
 import type { Competition, CompetitionStatus } from "@/lib/types";
+import { getCompetitionStatus, getDaysUntilDeadline } from "@/lib/utils/competitions";
 
 interface AdminCompetitionWorkspaceProps {
   competitions: Competition[];
@@ -58,6 +59,8 @@ interface AdminCompetitionWorkspaceProps {
   onBulkStatusChange: (status: CompetitionStatus) => void;
   onBulkSetPriority: () => void;
   onBulkRemovePriority: () => void;
+  onExportCsv: () => void;
+  onAutoFixStatus: () => void;
 }
 
 export function AdminCompetitionWorkspace({
@@ -109,7 +112,38 @@ export function AdminCompetitionWorkspace({
   onBulkStatusChange,
   onBulkSetPriority,
   onBulkRemovePriority,
+  onExportCsv,
+  onAutoFixStatus,
 }: AdminCompetitionWorkspaceProps) {
+  const staleOpenCompetitions = useMemo(
+    () =>
+      competitions.filter((c) => {
+        const status = getCompetitionStatus(c, now);
+        return status === "open" && c.regEnd && c.regEnd < now.toISOString().split("T")[0];
+      }),
+    [competitions, now],
+  );
+
+  const staleComingSoonCompetitions = useMemo(
+    () =>
+      competitions.filter((c) => {
+        const status = getCompetitionStatus(c, now);
+        return status === "coming-soon" && c.regStart && c.regStart <= now.toISOString().split("T")[0];
+      }),
+    [competitions, now],
+  );
+
+  const urgentCompetitions = useMemo(
+    () =>
+      competitions.filter((c) => {
+        const daysLeft = getDaysUntilDeadline(c.regEnd, now);
+        return daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
+      }),
+    [competitions, now],
+  );
+
+  const hasStatusIssues = staleOpenCompetitions.length > 0 || staleComingSoonCompetitions.length > 0;
+
   return (
     <div className="flex flex-col gap-6">
       <section className="grid gap-4 md:grid-cols-4">
@@ -146,6 +180,49 @@ export function AdminCompetitionWorkspace({
           </p>
         </div>
       </section>
+
+      <div className="flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onExportCsv}
+          className="inline-flex h-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-4 text-xs font-medium text-zinc-300 transition hover:border-white/20 hover:text-zinc-100"
+        >
+          Export CSV
+        </button>
+      </div>
+
+      {hasStatusIssues ? (
+        <section className="rounded-[1.25rem] border border-rose-300/18 bg-rose-300/10 px-4 py-3 backdrop-blur-md sm:px-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-rose-50">
+                Ditemukan data dengan status tidak sesuai
+              </p>
+              <p className="mt-1 text-xs text-rose-200/70">
+                {staleOpenCompetitions.length > 0
+                  ? `${staleOpenCompetitions.length} kompetisi masih \u201CMasih buka\u201D tapi sudah lewat deadline. ` : null}
+                {staleComingSoonCompetitions.length > 0
+                  ? `${staleComingSoonCompetitions.length} kompetisi masih \u201CComing Soon\u201D tapi sudah waktunya dibuka. ` : null}
+                {urgentCompetitions.length > 0 && staleOpenCompetitions.length === 0 && staleComingSoonCompetitions.length === 0
+                  ? `${urgentCompetitions.length} kompetisi deadline-nya tinggal kurang dari 7 hari. ` : null}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onAutoFixStatus}
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-full border border-rose-200/20 bg-rose-200/10 px-4 text-xs font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-200/32 hover:bg-rose-200/14"
+            >
+              Perbarui otomatis
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {urgentCompetitions.length > 0 && !hasStatusIssues ? (
+        <section className="rounded-[1.25rem] border border-amber-200/14 bg-amber-200/8 px-4 py-3 text-sm text-amber-50 backdrop-blur-md sm:px-5">
+          <p>{urgentCompetitions.length} kompetisi deadline-nya tinggal kurang dari 7 hari.</p>
+        </section>
+      ) : null}
 
       {dataStatusMessage ? (
         <section className="rounded-[1.25rem] border border-amber-200/14 bg-amber-200/8 px-4 py-3 text-sm text-amber-50 backdrop-blur-md sm:px-5">

@@ -793,6 +793,136 @@ export function AdminCompetitionManager({
     });
   };
 
+  const handleAutoFixStatus = (): void => {
+    const nowMs = Date.now();
+    const todayStr = new Date(nowMs).toISOString().split("T")[0];
+
+    const updatedCompetitions = competitions.map((competition) => {
+      const status = getCompetitionStatus(competition, now);
+      const updated = { ...competition };
+
+      if (status === "open" && competition.regEnd && competition.regEnd < todayStr) {
+        const pastDate = new Date(nowMs - 86400000 * 7);
+        updated.regEnd = pastDate.toISOString().split("T")[0];
+        if (!updated.regStart || updated.regStart > updated.regEnd) {
+          updated.regStart = new Date(nowMs - 86400000 * 14).toISOString().split("T")[0];
+        }
+      }
+
+      if (status === "coming-soon" && competition.regStart && competition.regStart <= todayStr) {
+        const pastDate = new Date(nowMs - 86400000 * 7);
+        updated.regStart = pastDate.toISOString().split("T")[0];
+        updated.regEnd = new Date(nowMs + 86400000 * 23).toISOString().split("T")[0];
+      }
+
+      return updated;
+    });
+
+    const changedCompetitions = updatedCompetitions.filter((updated, index) => {
+      const original = competitions[index];
+      return original && (original.regStart !== updated.regStart || original.regEnd !== updated.regEnd);
+    });
+
+    if (changedCompetitions.length === 0) {
+      setSaveMessage("Tidak ada kompetisi yang perlu diperbarui.");
+      return;
+    }
+
+    startMutationTransition(async () => {
+      const results = await Promise.allSettled(
+        changedCompetitions.map((c) => updateCompetitionAction(c.id, c)),
+      );
+
+      const okCount = results.filter(
+        (r) => r.status === "fulfilled" && r.value.ok,
+      ).length;
+
+      if (okCount > 0) {
+        setCompetitions((currentCompetitions) =>
+          currentCompetitions.map((c) => {
+            const updated = updatedCompetitions.find((u) => u.id === c.id);
+            return updated ?? c;
+          }),
+        );
+        setSavedCompetitions((currentCompetitions) =>
+          currentCompetitions.map((c) => {
+            const updated = updatedCompetitions.find((u) => u.id === c.id);
+            return updated ?? c;
+          }),
+        );
+      }
+
+      setSaveMessage(
+        okCount === changedCompetitions.length
+          ? `${okCount} kompetisi berhasil diperbarui statusnya.`
+          : `${okCount} dari ${changedCompetitions.length} kompetisi berhasil diperbarui.`,
+      );
+    });
+  };
+
+  const handleExportCsv = (): void => {
+    if (competitions.length === 0) {
+      setSaveMessage("Tidak ada data kompetisi untuk diexport.");
+      return;
+    }
+
+    const headers = [
+      "Nama",
+      "Penyelenggara",
+      "Kategori",
+      "Status",
+      "Buka Registrasi",
+      "Tutup Registrasi",
+      "Mulai Penyisihan",
+      "Selesai Penyisihan",
+      "Prioritas",
+      "Link Registrasi",
+      "Guidebook",
+      "Instagram",
+      "Website",
+    ].join(",");
+
+    const rows = competitions.map((competition) => {
+      const status = getCompetitionStatus(competition, now);
+      const statusLabel =
+        status === "open"
+          ? "Masih buka"
+          : status === "coming-soon"
+            ? "Coming Soon"
+            : "Sudah tutup";
+
+      return [
+        competition.name,
+        competition.organizer,
+        competition.category,
+        statusLabel,
+        competition.regStart,
+        competition.regEnd,
+        competition.eventStart,
+        competition.eventEnd,
+        competition.isPriority ? "Ya" : "Tidak",
+        competition.links.registration ?? "",
+        competition.links.guidebook ?? "",
+        competition.links.instagram ?? "",
+        competition.links.website ?? "",
+      ]
+        .map((value) => `"${value.replace(/"/g, '""')}"`)
+        .join(",");
+    }).join("\n");
+
+    const csv = `\uFEFF${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `compbase-export-${now.toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setSaveMessage(`Data ${competitions.length} kompetisi berhasil diexport ke CSV.`);
+  };
+
   const handleDeleteSubmission = (submissionId: string): void => {
     startMutationTransition(async () => {
       const mutationResult = await deleteSubmissionAction(submissionId);
@@ -946,6 +1076,8 @@ export function AdminCompetitionManager({
               onBulkStatusChange={handleBulkStatusChange}
               onBulkSetPriority={handleBulkSetPriority}
               onBulkRemovePriority={handleBulkRemovePriority}
+              onExportCsv={handleExportCsv}
+              onAutoFixStatus={handleAutoFixStatus}
             />
           </div>
         ) : (

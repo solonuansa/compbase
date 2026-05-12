@@ -13,8 +13,10 @@ import {
 
 interface CompetitionDetailModalProps {
   competition: Competition;
+  similarCompetitions: Competition[];
   now: Date;
   onClose: () => void;
+  onOpenDetail: (competition: Competition) => void;
 }
 
 interface ActionLink {
@@ -55,8 +57,10 @@ function formatShareValue(value: string | undefined): string {
 
 export function CompetitionDetailModal({
   competition,
+  similarCompetitions,
   now,
   onClose,
+  onOpenDetail,
 }: CompetitionDetailModalProps) {
   const status = getCompetitionStatus(competition, now);
   const daysLeft = getDaysUntilDeadline(competition.regEnd, now);
@@ -159,6 +163,50 @@ export function CompetitionDetailModal({
               </a>
             ))}
           </div>
+
+          {similarCompetitions.length > 0 ? (
+            <section>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
+                Kompetisi serupa
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {similarCompetitions.map((similar) => {
+                  const similarStatus = getCompetitionStatus(similar, now);
+                  const similarDaysLeft = getDaysUntilDeadline(similar.regEnd, now);
+                  return (
+                    <button
+                      key={similar.id}
+                      type="button"
+                      onClick={() => onOpenDetail(similar)}
+                      className="group min-w-0 flex-1 rounded-[1rem] border border-white/8 bg-white/[0.02] p-4 text-left transition hover:border-violet-200/20 hover:bg-violet-200/5"
+                    >
+                      <p className="truncate text-sm font-medium text-zinc-100 group-hover:text-violet-100">
+                        {similar.name}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-zinc-500">
+                        {similar.organizer}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-400">
+                        <span>
+                          {similarStatus === "open"
+                            ? "Masih buka"
+                            : similarStatus === "coming-soon"
+                              ? "Coming Soon"
+                              : "Sudah tutup"}
+                        </span>
+                        {similarDaysLeft !== null && similarDaysLeft >= 0 ? (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span>Sisa {similarDaysLeft} hari</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>

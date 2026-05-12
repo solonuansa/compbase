@@ -104,8 +104,14 @@ export function CompetitionCatalog({
       {activeCompetition ? (
         <CompetitionDetailModal
           competition={activeCompetition}
+          similarCompetitions={allCompetitions.filter(
+            (c) =>
+              c.category === activeCompetition.category &&
+              c.id !== activeCompetition.id,
+          ).slice(0, 3)}
           now={now}
           onClose={handleCloseDetail}
+          onOpenDetail={handleOpenDetail}
         />
       ) : null}
     </>
